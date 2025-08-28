@@ -1,0 +1,66 @@
+---
+title: "plottingdistance"
+output: html_document
+date: "2025-06-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 
+
+
+```{r}
+df1 <- data.frame(
+  Au = c(0, 1),
+  Prior = c(0.3, 0.7),
+  Posterior = c(1, 0)
+)
+
+```
+
+```{r}
+# Assuming your data frame is named df
+df_long <- tidyr::pivot_longer(df1, cols = c("Prior", "Posterior"), names_to = "Type", values_to = "Value")
+
+ggplot(df_long, aes(x = factor(Type), y = Value, fill = Au)) +
+  geom_col(position = "dodge") +
+  labs(x = "Au", y = "Probability", title = "Prior and Posterior by Au") +
+  theme_minimal()
+
+```
+
+```{r}
+library(ggplot2)
+
+# Create the data in long format
+df_long <- data.frame(
+  Type = rep(c("Prior", "Posterior"), each = 2),
+  Au = factor(rep(c(0, 1), times = 2)),
+  Value = c(0.3, 0.7, 1, 0)
+)
+
+df_long$Type <- factor(df_long$Type, levels = c("Prior", "Posterior"))
+
+# Plot
+ggplot(df_long, aes(x = Type, y = Value, fill = Au)) +
+  geom_col(position = "dodge", width = 0.7) +
+  scale_fill_discrete(labels = c("Au=0", "Au=1")) +
+  #scale_fill_manual(
+    #values = c("#2b5c82", "#f5b041"),
+    #name = "Au",
+    #labels = c("Au=0", "Au=1")
+  #) +
+  labs(
+    title = "Total variation distance for Au",
+    x = NULL,
+    y = NULL
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+```

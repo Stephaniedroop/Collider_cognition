@@ -1,0 +1,246 @@
+---
+title: "modelcheckplot"
+output: html_document
+date: "2025-01-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggnewscale)
+library(tidyverse)
+```
+
+## Check fit of CESM and 'LCStac' 
+### (model lesioned to have no Causal Selection, but still has inference, and treated for actual causality) against participants
+
+WE DON'T EVEN NEED THE MODEL DATA FOR THIS ---- EVENTUALLY DELETE DOWN TO WHERE THE DATA IS BROUGHT IN
+
+```{r, include=FALSE}
+df <- read.csv('modelAndDataUnfit.csv') # 288 obs of 14
+
+# df <- read.csv('df.csv') This was what was made in `optimise_modelSD.R' but repeated here to always pull from the same csv
+
+
+# Let's create variables coding the actual observation
+df.map<-data.frame(condition=c('c1','c2','c3','c4','c5','d1','d2','d3','d4','d5','d6','d7'),
+                   A=c(0,0,1,1,1, 0,0,0,1,1,1,1),
+                   B=c(0,1,0,1,1, 0,1,1,0,0,1,1),
+                   E=c(0,0,0,0,1, 0,0,1,0,1,0,1))
+
+for (i in 1:nrow(df))
+{
+  df$A[i]<-df.map$A[df.map$condition==df$trialtype[i]]
+  df$B[i]<-df.map$B[df.map$condition==df$trialtype[i]]
+  df$E[i]<-df.map$E[df.map$condition==df$trialtype[i]]
+}
+
+# Let's (maybe temporarily) remove some columns I'm not using to keep things simple,
+# merge the trialtype and pgroup columns to make a list of unique pgroup*trialtype combos
+# And create a new filtering column 'include' that only excludes respones that are directly contrary to observation
+# df <- df %>% select(-X, -a1, -inf, -isPerm, -isLat) %>% unite(trial_id, pgroup, trialtype, remove=F) %>%
+#   mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
+
+df <- df %>% 
+  #select(-X, -a1, -inf, -isPerm, -isLat) %>% 
+  #unite(pgroup, trialtype, remove=F) %>% #trial_id, 
+  mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
+
+
+# NOW filter for what we want, this time round for plotting
+df <- df %>% 
+  filter(trialtype %in% c('c5', 'd3', 'd5', 'd7'),
+         include==T)
+
+# NOW NOT SURE WHERE TO TAKE IT OR HOW TO NORMALISE IN ORDER TO PLOT
+
+# Set NA to 0 
+df[is.na(df)] <- 0 # 72 obs of 16
+tau <- 0.31
+
+df <- df %>% select(-c(cesmftac:scoreLCS,scoreLIS:scoreLIStac))
+
+# And get the normalised scores within trialtype for each of the two models we are trying to plot. 72 obs of 14 vars
+df <- df %>% 
+  group_by(pgroup, trialtype) %>% 
+  mutate(cesmn = exp(cesmf/tau)/sum(exp(cesmf/tau)),
+         LCStacn = exp(scoreLCStac/tau)/sum(exp(scoreLCStac/tau)))
+
+# Now 72 obs of 16
+
+
+```
+
+```{r, include=FALSE}
+
+df <- df %>% # 216 of 11
+  select(-X, -X.1, -cesmf, -scoreLCStac) %>% 
+  rename(ppts=prop) %>%
+  pivot_longer(cols = c(ppts,cesmn,LCStacn), values_to = 'percent')
+
+df$name <- as.factor(df$name)
+df$pgroup <- as.factor(df$pgroup)
+df$trialtype <- as.factor(df$trialtype)
+df$node3 <- as.factor(df$node3)
+
+```
+
+
+
+```{r, echo=FALSE}
+# ------------ 4. Plot -----------------
+# We want to put conj and disc trialtypes on the same plot. 
+# But the trialtype names 'c1' etc are not informative
+# So we need a vector of the spec for the labels:
+
+trialspec <- c('Disj: A=1, B=1, | E=1',
+                   'Disj: A=1, B=0, | E=1',
+                   'Disj: A=0, B=1, | E=1',
+                   'Conj: A=1, B=1, | E=1')
+
+# They follow the order: (but reversed)
+
+# c5: 111
+# d3: 011
+# d5: 101
+# d7: 111
+
+# Which can conveniently is alphanumeric and be mapped using unique vals from the trialtype factor
+trialvalsvec <- as.vector(levels(df$trialtype)) %>% sort(decreasing = TRUE)
+```
+
+Select just the four trial types where E=1. Plotted for each probability group separately. 
+
+Probabilities given in order p(A==1), p(Au==1), p(B==1), p(Bu==1).
+
+### pgroup1:
+
+Where A doesn't often happen, B does often happen, and Au and Bu are steady.
+
+```{r, echo=FALSE, warning=FALSE}
+pw1 <- df %>%
+  filter(pgroup=='1') %>% 
+  ggplot(aes(x = node3, y = percent, colour = name)) + # Alpha shading shows what is a coherent answer , alpha = isPerm
+  geom_col(position = 'dodge') +
+  facet_wrap(factor(trialtype, levels = trialvalsvec, labels = trialspec)~.) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  guides(fill = guide_legend(override.aes = list(size = 0))) +
+  labs(x='Node', y=NULL,
+       title = 'pg1: .1, .5, .8, .5',
+       subtitle = 'Participants and model predictions')
+
+pw1
+
+#ggsave('pw.pdf', plot=pw, width = 7, height = 5, units = 'in')
+
+```
+
+### pgroup2: 
+
+Where A and B are steady, but A doesn't often work, and B does often work (Au low and Bu high).
+
+```{r, echo=FALSE, warning=FALSE}
+pw2 <- df %>%
+  filter(pgroup=='2') %>% 
+  ggplot(aes(x = node3, y = percent, colour = name)) + # Alpha shading shows what is a coherent answer , alpha = isPerm
+  geom_col(position = 'dodge') +
+  facet_wrap(factor(trialtype, levels = trialvalsvec, labels = trialspec)~.) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  guides(fill = guide_legend(override.aes = list(size = 0))) +
+  labs(x='Node', y=NULL,
+       title = 'pg2: .5, .1, .5, .8',
+       subtitle = 'Participants and model predictions')
+
+pw2
+
+#ggsave('pw.pdf', plot=pw, width = 7, height = 5, units = 'in')
+
+```
+
+### pgroup3:
+
+
+```{r, echo=FALSE, warning=FALSE}
+pw3 <- df %>%
+  filter(pgroup=='3') %>% 
+  ggplot(aes(x = node3, y = percent, fill = name)) + # Alpha shading shows what is a coherent answer , alpha = isPerm
+  geom_col(position = 'dodge') +
+  facet_wrap(factor(trialtype, levels = trialvalsvec, labels = trialspec)~.) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  guides(fill = guide_legend(override.aes = list(size = 0))) +
+  labs(x='Node', y='%', fill='Source',
+       title = 'Probabilities: .1, .7, .8, .5',
+       subtitle = 'in order p(A=1), p(Au=1), p(B=1), p(Bu=1)')
+
+pw3
+
+ggsave('../figs/Reporting/pw3.pdf', plot=pw3, width = 4.2, height = 3, units = 'in')
+
+```
+
+
+above here is holdover from old script - remembre to delete
+
+## Check for significance and abnormal inflation
+
+Test for significance
+
+Get trialtypes d7 and c5 (111), for pgroups 1 and 3, for individual observations, and tag with whether or not they selected the lower-probability variable 
+
+```{r, include=FALSE}
+load('../Data/Data.Rdata', verbose = T) # This is one big df, 'data', 3408 obs of 18 ie. 284 ppts
+
+data <- data %>% 
+  unite('pg_tt', pgroup, trialtype, sep = "_", remove = FALSE)
+
+```
+
+
+```{r, include=FALSE}
+dfab <- data %>% 
+  filter(pgroup %in% c(1, 3),
+         trialtype %in% c('c5', 'd7'),
+         node3 %in% c('A=1', 'B=1'))
+
+# There is one obs of A=0, so removed this with line above, so now 107 rows instead of 108
+
+# Variable P: allocate 1 when they choose the more normal variable (same in both pgroup 1 and 3)
+dfab <- dfab %>% 
+  mutate(P = case_when(
+    node3 == 'B=1' ~ 1,
+    node3 == 'A=1' ~ 0
+  ))
+
+dfab <- dfab %>% 
+  select(1,8,21)
+# Set P: 
+# 1: B=1, A=0 ie B is 1 more often, B is more normal
+# 3: B=1, A=0 ie B is 1 more often, B is more normal
+
+```
+
+
+And for an lme4 significance test
+
+```{r, include=FALSE}
+#library(lme4)
+library(lmerTest)
+
+predP <- glmer(P ~ 1 + (1|subject_id) + (1|pg_tt), data = dfab, family = binomial(link='logit'))
+summary(predP)
+
+exp(fixef(predP))
+
+coef <- fixef(predP)
+
+lower_logodds <- coef-(1.96*.3387)
+upper_logodds <- coef+(1.96*.3387)
+
+lower_or <- exp(lower_logodds)
+upper_or <- exp(upper_logodds)
+
+```
+
+Does this now need transformed? How?

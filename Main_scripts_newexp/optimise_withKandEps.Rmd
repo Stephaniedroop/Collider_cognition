@@ -1,0 +1,422 @@
+---
+title: "optimise"
+output: html_document
+date: "2025-02-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Summary
+
+Takes data created in `modelCombLesions.Rmd`
+
+
+# STEP 1: READ IN 
+
+The cogsci scripts did not have K or epsilon, only tau.
+We want a series of models with K, epsilon and tau, and a series with only epsilon and tau.
+Kappa and Kindness are a 'behaviourally meaningful' parameter and value.
+Epsilon and tau are only for fitting.
+
+Internet says:
+- For the pars you want bounded 0,1: use exp(pars)/(1 + exp(pars)) to optimise in logit space. Retrieve with logistic function plogis(optimised par).
+- For the pars you want more than 0 but upper unbounded, use exp(par) to optimise in log space. Retrieve with exp(optimised par). 
+
+
+```{r, include=FALSE}
+
+df <- read.csv('../model_data/modelAndDataUnfit.csv') # 288 obs of 14
+
+# Let's create variables coding the actual observation
+df.map<-data.frame(condition=c('c1','c2','c3','c4','c5','d1','d2','d3','d4','d5','d6','d7'),
+                   A=c(0,0,1,1,1, 0,0,0,1,1,1,1),
+                   B=c(0,1,0,1,1, 0,1,1,0,0,1,1),
+                   E=c(0,0,0,0,1, 0,0,1,0,1,0,1))
+
+for (i in 1:nrow(df))
+{
+  df$A[i]<-df.map$A[df.map$condition==df$trialtype[i]]
+  df$B[i]<-df.map$B[df.map$condition==df$trialtype[i]]
+  df$E[i]<-df.map$E[df.map$condition==df$trialtype[i]]
+}
+
+
+df <- df %>%
+  mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
+
+df <- df %>% rename(trial_id = pg_tt)
+#df[is.na(df)] <- -Inf # not checked this part yet TO DO
+#df[, 9:16][is.na(df[, 9:16])] <- -Inf
+df[df$include == FALSE, 9:16] <- -Inf
+
+#write.csv(df, "../model_data/unfitNEWexp.csv")
+
+```
+
+
+the nonnonsensical ones also get some additional probability from the right hand part of the likelihood function. So you want the right hand side of the equation to resolve to zero for the nonsensical options and something >0 for the sensible options
+
+How many even were the nonsensical ones?
+```{r}
+nons <- sum(df$n[df$include == FALSE]) #136 / 2637
+
+ppl <- df %>% group_by(trial_id) %>% summarise(n=sum(n)) # WHY ARE THERE 2637 TRIALS?? Because of 3 bullshit NAs for no reason
+sum(ppl$n)
+
+# For old experiment it is 50/3408 = .0147
+# For new experiment it is 136/2637 = .0516
+
+```
+
+
+There is a set of models without the Kindness module and kappa parameter. 
+Then, the Kindness/kappa is brought in to act on the same fundamental set of models to give them Kindness/kappa. 
+So we have two sets: 
+1. A full one with Kindness/kappa
+2. A lesioned set, which actually existed before and were generated before Kindness/kappa (but that shouldn't matter to anyone).
+
+With Kindness:
+
+full
+noAct
+noInf
+noSelect
+noActnoInf
+noActnoSelect
+noActnoInfnoSelect
+noInfnoSelect
+
+Without Kindness: in other words the same list but without Kind/kappa:
+
+noKind
+noActnoKind
+noActnoInfnoKind
+noActnoKindnoSelect
+noInfnoKindnoSelect
+noInfnoKind
+noKindnoSelect
+noActnoInfnoKindnoSelect
+
+The two different sets have different numbers of parameters, and different ways of behaving. 
+So everything we do, we need to do twice.
+
+Here is a series of functions to generate model predictions and optimise the NLL. We need to do that twice.
+
+# First, with Kindness/kappa
+
+NOTE FROM NEIL: Every option gets epsilon * (1/n)   the nonnonsensical ones also get some additional probability from the right hand part of the likelihood function. So you want the right hand side of the equation to resolve to zero for the nonsensical options and something >0 for the sensible options.
+
+
+```{r, include=FALSE}
+# Initial values for testing:
+pars <- c(1, 1, 1)
+mod_name <- 'full'
+i <- 1
+
+# Function to get the model likelihood.
+model_likelihood <- function(pars, df, mod_name)
+{
+  # 
+  epsilon <- plogis(pars[1])  # exp(pars[1])/(1+exp(pars[1])) # 
+  tau <- exp(pars[2]) # exp(pars[2])/(1+exp(pars[2])) #   
+  kappa <- exp(pars[3])
+  tt <- unique(df$trial_id) 
+  
+  nlls <- rep(NA, length(tt))
+  for (i in 1:length(tt))
+  {
+    n <- df$n[df$trial_id==tt[i]] 
+    mod_raw <- df[[mod_name]][df$trial_id==tt[i]] 
+    
+    # A distance measure which gets parametrised by kappa
+    dist <- df$tv[df$trial_id==tt[i]] 
+    dist[is.na(dist)] <- 0
+    
+    # Model predictions
+    mpred <- epsilon * (1/8) + (1-epsilon) * (exp( (mod_raw + kappa*dist)/tau) / sum(exp( (mod_raw + kappa*dist)/tau)))
+    
+    nlls[i] <-  -sum(log(mpred)*n) # Get likelihood for this trial
+  }
+  
+  sum(nlls) # Return the total likelihood
+}
+
+```
+
+A function to enerate actual predictions for each node in each conditions:
+
+```{r, include=FALSE}
+generate_predictions <- function(mod_name, df, pars) {
+  epsilon <- plogis(pars[1]) # exp(pars[1])/(1+exp(pars[1])) #  
+  tau <- exp(pars[2]) #exp(pars[2])/(1+exp(pars[2])) # 
+  kappa <- exp(pars[3])
+  tt <- unique(df$trial_id)
+  
+  do.call(rbind, lapply(tt, function(t_id) {
+    trial_rows <- df$trial_id == t_id 
+    mod_raw <- df[[mod_name]][trial_rows]
+    
+    # A distance measure which will get parametrised by kappa
+    dist <- df$tv[trial_rows]
+    dist[is.na(dist)] <- 0
+    
+    # Model predictions
+    mpred <- epsilon * (1/8) + (1-epsilon) * (exp( (mod_raw + kappa*dist)/tau) / sum(exp( (mod_raw + kappa*dist)/tau)))
+    
+    data.frame(
+      model = mod_name,
+      trial_id = t_id,
+      node3 = df$node3[trial_rows],
+      predicted_prob = mpred
+    )
+  }))
+}
+
+
+```
+
+
+Optimise the parameters:
+
+```{r, include=FALSE}
+
+optimize_models <- function(model_names, df, initial_values = c(1, 1, 1)) { 
+  optimize_single <- function(mod_name) {
+    result <- tryCatch({
+      optim(par = initial_values, 
+          fn = model_likelihood, 
+          df = df, 
+          mod_name = mod_name)
+  }, error = function(e) {
+      message("Error in optimization for model ", mod_name, ": ", e$message)
+      return(list(par = c(NA, NA, NA), value = NA))
+    })
+    return(result)
+  }
+  
+  out <- lapply(model_names, optimize_single)
+  names(out) <- model_names
+  
+  mfs <- data.frame(
+    model = names(out),
+    epsilon = plogis(sapply(out, function(x) x$par[1])), 
+    tau = exp(sapply(out, function(x) x$par[2])), # 
+    kappa = exp(sapply(out, function(x) x$par[3])),
+    logl = -sapply(out, function(x) x$value)
+  ) %>%
+    mutate(BIC = -2 * logl + 3 * log(sum(df$n)))
+  
+  # To actually generate predictions 
+  predictions <- do.call(rbind, lapply(names(out), function(mod_name) {
+    if(!any(is.na(out[[mod_name]]$par))) {
+      generate_predictions(
+        mod_name = mod_name,
+        df = df,
+        pars = out[[mod_name]]$par
+      )
+    }
+  }))
+  
+  list(
+    model_fits = mfs %>% mutate(epsilon = format(epsilon, digits=3), tau = format(tau, digits=3), kappa = format(kappa, digits=3)),
+    predictions = predictions
+  )
+}
+
+# Usage:
+model_names <- c('full', 
+                 'noAct', 
+                 'noInf', 
+                 'noSelect', 
+                 'noActnoInf', 
+                 'noActnoSelect', 
+                 'noInfnoSelect', 
+                 'noActnoInfnoSelect')  
+
+results1 <- optimize_models(model_names, df)
+
+print(results1)
+```
+
+# Now time for the two-parameter, No-Kind version
+
+
+# Second, no Kindness/kappa, but Yes epsilon and tau
+
+NOTE FROM NEIL: Every option gets epsilon * (1/n)   the nonnonsensical ones also get some additional probability from the right hand part of the likelihood function. So you want the right hand side of the equation to resolve to zero for the nonsensical options and something >0 for the sensible options.
+
+
+```{r, include=FALSE}
+# Initial values for testing:
+pars <- c(1, 1)
+mod_name <- 'noKind'
+i <- 1
+
+# Function to get the model likelihood.
+model_likelihood2 <- function(pars, df, mod_name)
+{
+  # 
+  epsilon <- plogis(pars[1]) # exp(pars[1])/(1+exp(pars[1])) #  
+  tau <-  exp(pars[2]) # exp(pars[2])/(1+exp(pars[2])) # 
+  #kappa <- exp(pars[3])
+  tt <- unique(df$trial_id) 
+  
+  nlls <- rep(NA, length(tt))
+  for (i in 1:length(tt))
+  {
+    n <- df$n[df$trial_id==tt[i]] 
+    mod_raw <- df[[mod_name]][df$trial_id==tt[i]] 
+    #mod_raw[is.na(mod_raw)] <- 0 
+    
+    #dist <- df$tv[df$trial_id==tt[i]] 
+    #dist[is.na(dist)] <- 0
+    
+    mpred <- epsilon * (1/8) + (1-epsilon) * (exp(mod_raw/tau) / sum(exp(mod_raw/tau)))
+    
+    nlls[i] <-  -sum(log(mpred)*n) # Get likelihood for this trial
+  }
+  
+  sum(nlls) # Return the total likelihood
+}
+
+```
+
+A function to enerate actual predictions for each node in each conditions:
+
+```{r, include=FALSE}
+generate_predictions2 <- function(mod_name, df, pars) {
+  epsilon <- plogis(pars[1])  #exp(pars[1])/(1+exp(pars[1])) # 
+  tau <- exp(pars[2]) #exp(pars[2])/(1+exp(pars[2])) # 
+  #kappa <- exp(pars[3])
+  tt <- unique(df$trial_id)
+  
+  do.call(rbind, lapply(tt, function(t_id) {
+    trial_rows <- df$trial_id == t_id 
+    mod_raw <- df[[mod_name]][trial_rows]
+    #mod_raw[is.na(mod_raw)] <- 0
+    #dist <- df$tv[trial_rows]
+    #dist[is.na(dist)] <- 0
+    
+    mpred <- epsilon * (1/8) + (1-epsilon) * (exp(mod_raw/tau) / sum(exp( mod_raw/tau)))
+    
+    data.frame(
+      model = mod_name,
+      trial_id = t_id,
+      node3 = df$node3[trial_rows],
+      predicted_prob = mpred
+    )
+  }))
+}
+
+
+```
+
+
+Optimise the parameters:
+
+```{r, include=FALSE}
+
+optimize_models2 <- function(model_names, df, initial_values = c(1, 1)) { 
+  optimize_single <- function(mod_name) {
+    result <- tryCatch({
+      optim(par = initial_values, 
+          fn = model_likelihood2, 
+          df = df, 
+          mod_name = mod_name)
+  }, error = function(e) {
+      message("Error in optimization for model ", mod_name, ": ", e$message)
+      return(list(par = c(NA, NA), value = NA))
+    })
+    return(result)
+  }
+  
+  out <- lapply(model_names, optimize_single)
+  names(out) <- model_names
+  
+  mfs <- data.frame(
+    model = names(out),
+    epsilon = plogis(sapply(out, function(x) x$par[1])), #plogis(logodd) gives prob
+    tau = exp(sapply(out, function(x) x$par[2])),
+    #kappa = exp(sapply(out, function(x) x$par[3])),
+    logl = -sapply(out, function(x) x$value)
+  ) %>%
+    mutate(BIC = -2 * logl + 2 * log(sum(df$n)))
+  
+  # To actually generate predictions 
+  predictions <- do.call(rbind, lapply(names(out), function(mod_name) {
+    if(!any(is.na(out[[mod_name]]$par))) {
+      generate_predictions2(
+        mod_name = mod_name,
+        df = df,
+        pars = out[[mod_name]]$par
+        # epsilon = plogis(sapply(out, function(x) x$par[1])),
+    # tau = plogis(sapply(out, function(x) x$par[2])),
+    # kappa = exp(sapply(out, function(x) x$par[3])),
+      )
+    }
+  }))
+  
+  list(
+    model_fits = mfs %>% mutate(epsilon = format(epsilon, digits=3), tau = format(tau, digits=3)),
+    predictions = predictions
+  )
+}
+
+# Usage:
+model_names2 <- c('noKind', 
+                 'noActnoKind', 
+                 'noInfnoKind', 
+                 'noKindnoSelect', 
+                 'noActnoInfnoKind', 
+                 'noActnoKindnoSelect', 
+                 'noInfnoKindnoSelect', 
+                 'noActnoInfnoKindnoSelect')  
+
+# Replace the predictions with the model_names2 (this is fine because the presence or absence of the other modules remains same)
+colnames(df)[9:16] <- model_names2
+
+results2 <- optimize_models2(model_names2, df)
+
+print(results2)
+```
+
+
+
+
+
+
+Presumably we can put all the model preds together to then plot against people, so only do this bit once we are happy with both sets of models:
+
+```{r}
+allpredictions <- rbind(results1$predictions, results2$predictions) # 4608: 36tt x 8 nodevals x 16 models 
+# not as previously 1728 obs - which is 36tt x6 nodevals x 8 models
+```
+
+
+This result, newdf, is predictions from the model to then plot against people. So it has to be in a slightly different format: the plotting script wants it in 
+
+```{r}
+df_wide <- allpredictions %>%
+  pivot_wider(
+    id_cols = c(trial_id, node3),
+    names_from = model,
+    values_from = predicted_prob
+  )
+
+```
+
+Merge back in the participant numbers and then send for plotting.
+
+```{r}
+justppt <- df %>% select(trial_id, node3, n, prop, pgroup, Actual, A, B, E, include)
+
+fitforplot <- merge(df_wide, justppt, by = c('trial_id', 'node3'))
+fitforplot[, 22][is.na(fitforplot[, 22])] <- FALSE
+```
+
+```{r}
+write.csv(fitforplot, '../model_data/fitforplot16m.csv')  
+```

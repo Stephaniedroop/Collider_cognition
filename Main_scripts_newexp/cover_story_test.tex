@@ -1,0 +1,224 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={cover\_story\_test},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{cover\_story\_test}
+\author{}
+\date{\vspace{-2.5em}2025-08-19}
+
+\begin{document}
+\maketitle
+
+\subsection{A check to see if cover story affected
+answering}\label{a-check-to-see-if-cover-story-affected-answering}
+
+{[}Here all the probabilties are shown from pgroup3:
+A=.1,Au=.7,B=.8,Bu=.5{]}
+
+There are three cover stories. In slightly condensed form, they are:
+
+\begin{quote}
+The situation is \ldots{} a person walking down a street full of cafes,
+looking for a place to eat. They have already decided what they want to
+eat: a main dish, a dessert, or both. They read the menus, and decide
+whether to enter and eat something. If the food is on the menu and they
+want to eat it, they will enter the cafe. {[}10\%{]} of the cafes have
+main dishes and {[}80\%{]} have desserts. The person wants to eat a main
+dish {[}70\%{]} of the time and wants to eat a dessert {[}50\%{]} of the
+time. The person enters the cafe to order if {[}either one / both {]} of
+the main dish or dessert is on the menu and the person wants to eat what
+is on the menu.
+\end{quote}
+
+\begin{quote}
+The situation is \ldots{} an afternoon university seminar class. The
+class is compulsory, but two particular students only sometimes attend.
+These two students are intelligent, passionate, articulate and
+well-read. However, even when they attend, they are only in the mood to
+talk if they have had a good morning! (Their morning and hence their
+mood does not affect how likely they are to turn up; a bad morning just
+makes them quiet.) But if they attend and had a good morning, there will
+always be a good discussion. The first student attends {[}10\%{]} of the
+time and the second student attends {[}80\%{]} of the time. The first
+student has a good morning {[}70\%{]} of the time, and the second
+student has a good morning {[}50\%{]} of the time. A good discussion
+always happens when {[}either/both{]} student attends and had a good
+morning.
+\end{quote}
+
+\begin{quote}
+The situation is a work meeting, where a company is trying to sell a
+product to a client. The presenter introduces some features in a talk,
+and then opens files to demonstrate. However, the laptop files are
+sometimes randomly corrupted and fail to open! The presenter does not
+know in advance which files are corrupted. The product has Feature A and
+Feature B, and the client will always accept the product if they see a
+working demonstration of {[}either/both{]} feature{[}/s{]}. The company
+presents Feature A {[}10\%{]} of the time and Feature B {[}80\%{]} of
+the time. The underlying laptop files for Feature A are sometimes
+corrupted: they only work {[}70\%{]} of the time, whether the feature is
+presented or not. The underlying laptop files for Feature B are
+sometimes corrupted: they only work {[}50\%{]} of the time, whether the
+feature is presented or not.
+\end{quote}
+
+\subsubsection{STATISTICAL TEST}\label{statistical-test}
+
+I split the data up by pgroup, and by trialtype, then inside each ran a
+Fisher's exact test on the discrete numbers of choices of each variable,
+compared across the three cover stories.
+
+\paragraph{Results of the Fisher's exact
+test:}\label{results-of-the-fishers-exact-test}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{  pvals }\OtherTok{\textless{}{-}} \FunctionTok{sapply}\NormalTok{(results\_list, }\ControlFlowTok{function}\NormalTok{(x) }\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{is.list}\NormalTok{(x)) x}\SpecialCharTok{$}\NormalTok{p.value }\ControlFlowTok{else} \ConstantTok{NA}\NormalTok{)}
+\FunctionTok{print}\NormalTok{(pvals)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       1_c1       1_c2       1_c3       1_c4       1_c5       1_d1       1_d2 
+## 0.35056494 0.23877612 0.01459854 0.70892911 0.92050795 0.03239676 0.32236776 
+##       1_d3       1_d4       1_d5       1_d6       1_d7       2_c1       2_c2 
+## 0.61453855 0.09529047 0.17588241 0.44985501 0.01729827 0.07859214 0.31736826 
+##       2_c3       2_c4       2_c5       2_d1       2_d2       2_d3       2_d4 
+## 0.27797220 0.26467353 0.02179782 0.66033397 0.40215978 0.82901710 0.07679232 
+##       2_d5       2_d6       2_d7       3_c1       3_c2       3_c3       3_c4 
+## 0.93750625 0.40785921 0.00069993 0.48105189 0.49315068 0.03559644 0.03829617 
+##       3_c5       3_d1       3_d2       3_d3       3_d4       3_d5       3_d6 
+## 0.14418558 0.67893211 0.00969903 0.75012499 0.81891811 0.15108489 0.36476352 
+##       3_d7 
+## 0.00009999
+\end{verbatim}
+
+So there are only two conditions where the cover stories make a
+difference at \textless{} 0.01: 2\_d7 and 3\_d7. (ie., disjunctive A=1,
+B=1, E=1, which is the overdetermined `most important' case). Trialtype
+d2 (A=0, B=1, E=0) also sneaks in there sometimes.
+
+In fact, the numbers are not comparable: because of the way the
+probabilities and cover stories were sampled rather than force divided
+and matched, perhaps there are more in some condition by a quirk of
+sampling?
+
+So, use proportions instead of counts.
+
+Normalise and plot the proportions:
+
+\pandocbounded{\includegraphics[keepaspectratio]{cover_story_test_files/figure-latex/unnamed-chunk-10-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{cover_story_test_files/figure-latex/unnamed-chunk-10-2.pdf}}
+
+So in general\ldots{} not sure what to do. It seems for this important
+trialtype (D111) the cover stories give rise to different participant
+behaviours. Especially the cafe one (here called `cook' for legacy
+reasons - that didn't affect what participants saw) and the job one are
+dissociated.
+
+I guess the next thing is to compare with model predictions? but I
+should find the reason first. How should I report it, if people react
+differently to different stories?
+
+\end{document}
