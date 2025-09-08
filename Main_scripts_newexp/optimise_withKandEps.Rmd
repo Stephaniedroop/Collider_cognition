@@ -16,15 +16,12 @@ Takes data created in `modelCombLesions.Rmd`
 
 # STEP 1: READ IN 
 
-The cogsci scripts did not have K or epsilon, only tau.
-We want a series of models with K, epsilon and tau, and a series with only epsilon and tau.
-Kappa and Kindness are a 'behaviourally meaningful' parameter and value.
-Epsilon and tau are only for fitting.
+There are four cognitive modules: Actual causality, Inference, causal Selection and Kindness.
+The first three are lesioned in the imported data itself, and Kindness in contrast is lesioned by the presence or absence of the 'behaviourally meaningful' parameter Kappa on that data. 
 
-Internet says:
-- For the pars you want bounded 0,1: use exp(pars)/(1 + exp(pars)) to optimise in logit space. Retrieve with logistic function plogis(optimised par).
-- For the pars you want more than 0 but upper unbounded, use exp(par) to optimise in log space. Retrieve with exp(optimised par). 
+So the code below roughly imports data of 8 models, then runs a set of likelihood and optimisation functions for a series of 8 models with K, epsilon and tau, THEN runs a slightly modified set of likelihood and optimisation functions to optimise the equivalent series of that 8 without Kindness with only epsilon and tau. 
 
+First some prelim setup and renaming:
 
 ```{r, include=FALSE}
 
@@ -53,8 +50,6 @@ df[df$include == FALSE, 9:16] <- -Inf
 
 ```
 
-the nonnonsensical ones also get some additional probability from the right hand part of the likelihood function. So you want the right hand side of the equation to resolve to zero for the nonsensical options and something >0 for the sensible options
-
 How many even were the nonsensical ones?
 ```{r}
 nons <- sum(df$n[df$include == FALSE]) #132 / 2580
@@ -67,12 +62,7 @@ sum(ppl$n) # 2580
 
 ```
 
-
-There is a set of models without the Kindness module and kappa parameter. 
-Then, the Kindness/kappa is brought in to act on the same fundamental set of models to give them Kindness/kappa. 
-So we have two sets: 
-1. A full one with Kindness/kappa
-2. A lesioned set, which actually existed before and were generated before Kindness/kappa (but that shouldn't matter to anyone).
+Names of models:
 
 With Kindness:
 
@@ -96,14 +86,16 @@ noInfnoKind
 noKindnoSelect
 noActnoInfnoKindnoSelect
 
-The two different sets have different numbers of parameters, and different ways of behaving. 
+The two different sets have different numbers of parameters. 
 So everything we do, we need to do twice.
 
-Here is a series of functions to generate model predictions and optimise the NLL. We need to do that twice.
+Here is a series of functions to generate model predictions and optimise the NLL.
 
 # First, with Kindness/kappa
 
-NOTE FROM NEIL: Every option gets epsilon * (1/n)   the nonnonsensical ones also get some additional probability from the right hand part of the likelihood function. So you want the right hand side of the equation to resolve to zero for the nonsensical options and something >0 for the sensible options.
+Internet says:
+- For the pars you want bounded 0,1: use exp(pars)/(1 + exp(pars)) to optimise in logit space. Retrieve with logistic function plogis(optimised par).
+- For the pars you want more than 0 but upper unbounded, use exp(par) to optimise in log space. Retrieve with exp(optimised par). 
 
 
 ```{r, include=FALSE}
@@ -238,11 +230,6 @@ print(results1)
 ```
 
 # Now time for the two-parameter, No-Kind version
-
-
-# Second, no Kindness/kappa, but Yes epsilon and tau
-
-NOTE FROM NEIL: Every option gets epsilon * (1/n)   the nonnonsensical ones also get some additional probability from the right hand part of the likelihood function. So you want the right hand side of the equation to resolve to zero for the nonsensical options and something >0 for the sensible options.
 
 
 ```{r, include=FALSE}
@@ -382,19 +369,12 @@ print(results2)
 ```
 
 
-
-
-
-
-Presumably we can put all the model preds together to then plot against people, so only do this bit once we are happy with both sets of models:
+Put all the model preds together to then plot against people, so only do this bit once we are happy with both sets of models:
 
 ```{r}
 allpredictions <- rbind(results1$predictions, results2$predictions) # 4608: 36tt x 8 nodevals x 16 models 
-# not as previously 1728 obs - which is 36tt x6 nodevals x 8 models
 ```
 
-
-This result, newdf, is predictions from the model to then plot against people. So it has to be in a slightly different format: the plotting script wants it in 
 
 ```{r}
 df_wide <- allpredictions %>%

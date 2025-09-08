@@ -1,11 +1,11 @@
 ---
-title: "Plots of model fit for all 16 models, for all 3 pgroups, for Bramley+Droop CESM function"
+title: "Plots of model fit for all 16 models, for all 3 pgroups, for Bramley+Droop CESM function using Pearson correlation"
 output:
   html_document: default
   pdf_document: default
 date: "2025-05-23"
 params: 
-  data_file: "../model_data/fitforplot16mpn.csv" # CHANGE INPUT DATA HERE ONLY 
+  data_file: "../model_data/fitforplot16mpn.csv" # CHANGE INPUT DATA HERE ONLY, by replacing last two letters before '.csv' with eg 'sp' for Spearman or 'ql' for Quillien+Lucas implementation
 ---
 
 ```{r setup, include=FALSE}
@@ -31,7 +31,7 @@ library(purrr)
 ```
 
 ```{r, echo=FALSE}
-df <- read.csv(params$data_file) # 288 obs of 27 vars - only the actual values of A/B 
+df <- read.csv(params$data_file) # 288 obs of 27 vars 
 
 # SOME STRINGS FOR NAMING PLOTS ETC
 filename <- params$data_file 
@@ -41,10 +41,14 @@ basestring <- basename(filename)
 last_two <- substr(sub("\\.csv$", "", basestring), nchar(basestring) - 5, nchar(basestring) - 3)
 ```
 
+This is a small extra section, you don't need it
+
 ```{r, include=FALSE}
 corful <- cor.test(df$full, df$prop, method = 'pearson')
 corsel <- cor.test(df$noSelect, df$prop, method = 'pearson')
 ```
+
+Wrangling and renaming of some factors and variables to make them individual per trial and useful for plotting
 
 ```{r, include=FALSE}
 df$structure <- ifelse(substr(df$trial_id, 3, 3) == "c", "conjunctive", 
@@ -186,9 +190,9 @@ Thereafter they are progressively lesioned.
 
 They are lesioned in the following way:
 
-- First block of eight inc. full: has Kindness, with all other modules lesioned dissociatively (naming convention `noX' means lesioned to remove the X module.
+- First block of eight inc. full: has Kindness, with all other modules lesioned dissociatively (naming convention 'noX' means lesioned to remove the X module.
 
-- Next block of eight: follows the same process in order, this time without Kindness.
+- Next block of eight: follows the same process in order, this time without Kindness. (Kindness was incorporated as an optimised free parameter).
 
 
 ```{r, echo=FALSE}
@@ -215,10 +219,9 @@ pgroups <- levels(df$pgroup)
 
 ```
 
-
+This next is main function for plotting any model and any pgroup. In the knitted file it will print all in order if you uncomment the following call, but it's long, so only uncomment if you want all.
 
 ```{r, include=FALSE}
-
 # Define plotting function
 plot_model_pgroup <- function(model_colname, pgroup_label, df) {
 df_filtered <- df %>% filter(pgroup == pgroup_label) 
@@ -251,6 +254,7 @@ plot.title = element_text(size = 18, face = "bold", hjust = 0.5)
 }
 ```
 
+The call to uncomment if you want individual plots for all models for all pgroups: (can be used for visual comparisons but otherwise not expected to be needed)
 
 ```{r, echo=FALSE, fig.width=12}
 # for (model in models) {
@@ -260,11 +264,14 @@ plot.title = element_text(size = 18, face = "bold", hjust = 0.5)
 # }
 ```
 
+Instead, call a single model and pgroup plot like this for example full model for pgroup3:
 
 ```{r, echo=FALSE, fig.width=12}
 plotf <- plot_model_pgroup('full', 'A=.1,Au=.7,B=.8,Bu=.5', df)
 print(plot)
 ```
+
+Then I tend to save plots in a separate block like this using the 'last_two' letters of the data_file set in params at the top of the page.
 
 ```{r, include=FALSE}
 plotname <- paste0("../figs/full3", last_two, ".pdf")
@@ -272,11 +279,14 @@ ggsave(plotname, plot = plotf)
 
 ```
 
+Another example of the model plot, this time for model noSelect:
 
 ```{r, echo=FALSE, fig.width=12}
 plotns <- plot_model_pgroup('noSelect', 'A=.1,Au=.7,B=.8,Bu=.5', df)
 print(plotns)
 ```
+
+And save it in the same place in the same way:
 
 ```{r, include=FALSE}
 plotname <- paste0("../figs/ns3", last_two, ".pdf")
@@ -285,11 +295,10 @@ ggsave(plotname, plot = plotns)
 ```
 
 
-
-## Some more specific plots, for reporting
+## Some more specific plots
 
 ```{r, echo=FALSE, fig.width=12}
-# A different function just for one plot
+# A different function to compare two models on one plot
 plot_two_models_pgroup <- function(model1, model2, pgroup_label, df) {
   df_filtered <- df %>% filter(pgroup == pgroup_label)
   ggplot(df_filtered, aes(x = node3, y = prop, fill = Observed, colour = Actual)) +
@@ -349,7 +358,7 @@ ggsave(plotname, plot = p)
 ```
 
 
-Now just observed v unobserved for everything together, noKind model
+Now just observed v unobserved for everything together, noKind model. It needs chunks to calculate separate long and sumamry dfs for the new se values - they are different because different numbers of observations in the means.
 
 ```{r, echo=FALSE}
 # 1. Gather and calculate mean and SE per group
@@ -394,7 +403,7 @@ ggsave(plotname, plot = punnk)
 
 ```
 
-Repeat just the observed v unobs for the full model just in case
+Repeat just the observed v unobs for the full model just in case it's needed, although it gives the same results as noKind, because k is so small in the best fitting models
 
 
 ```{r, echo=FALSE}
@@ -489,8 +498,6 @@ ggsave(plotname, plot = punobs_f)
 ```
 
 #### The next two chunks make a plot for noKind for unobserved v Effect
-
-I was thinking I should report noKind because its unobserved are more 'honest' since they are not stretched by the parameter kappa. But I should still do the full one afterwards.
 
 
 ```{r, include=FALSE}

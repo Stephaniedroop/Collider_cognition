@@ -10,13 +10,13 @@ date: "2024-10-10"
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(stringr)
-# Script takes the processed data from the collider ppt expt (`DATA.RDATA`) or ppt.csv
-# (which was cleaned and sliced in `preprocessing.R`) 
+# Script takes the processed data from the collider ppt expt (`DATA.RDATA`) 
+# (which was cleaned in `preprocessing.R`) 
 # and combines it with the pre-processed model predictions from `modpred_process2.R` (`tidied_preds4.csv`)
 ```
 
 ```{r}
-setwd("../../Main_scripts_newexp")
+#setwd("../../Main_scripts_newexp") # do this if you changed it for the Data processing
 ```
 
 ```{r, include=FALSE}
