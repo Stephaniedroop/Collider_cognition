@@ -28,7 +28,7 @@ Internet says:
 
 ```{r, include=FALSE}
 
-df <- read.csv('../model_data/modelAndDataUnfit.csv') # 288 obs of 14
+df <- read.csv('../model_data/modelAndDataUnfitpn.csv') # 288 obs of 21
 
 # Let's create variables coding the actual observation
 df.map<-data.frame(condition=c('c1','c2','c3','c4','c5','d1','d2','d3','d4','d5','d6','d7'),
@@ -48,26 +48,22 @@ df <- df %>%
   mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
 
 df <- df %>% rename(trial_id = pg_tt)
-#df[is.na(df)] <- -Inf # not checked this part yet TO DO
-#df[, 9:16][is.na(df[, 9:16])] <- -Inf
+# Any result not 'real' or 'Actual' still needs some small prob value allocated by the softmax, so give -Inf here
 df[df$include == FALSE, 9:16] <- -Inf
 
-#write.csv(df, "../model_data/unfitNEWexp.csv")
-
 ```
-
 
 the nonnonsensical ones also get some additional probability from the right hand part of the likelihood function. So you want the right hand side of the equation to resolve to zero for the nonsensical options and something >0 for the sensible options
 
 How many even were the nonsensical ones?
 ```{r}
-nons <- sum(df$n[df$include == FALSE]) #136 / 2637
+nons <- sum(df$n[df$include == FALSE]) #132 / 2580
 
-ppl <- df %>% group_by(trial_id) %>% summarise(n=sum(n)) # WHY ARE THERE 2637 TRIALS?? Because of 3 bullshit NAs for no reason
-sum(ppl$n)
+ppl <- df %>% group_by(trial_id) %>% summarise(n=sum(n)) 
+sum(ppl$n) # 2580
 
 # For old experiment it is 50/3408 = .0147
-# For new experiment it is 136/2637 = .0516
+# For new experiment it is 132/2580 = .0511
 
 ```
 
@@ -146,7 +142,7 @@ model_likelihood <- function(pars, df, mod_name)
 
 ```
 
-A function to enerate actual predictions for each node in each conditions:
+A function to generate actual predictions for each node in each conditions:
 
 ```{r, include=FALSE}
 generate_predictions <- function(mod_name, df, pars) {
@@ -373,10 +369,12 @@ model_names2 <- c('noKind',
                  'noActnoInfnoKind', 
                  'noActnoKindnoSelect', 
                  'noInfnoKindnoSelect', 
-                 'noActnoInfnoKindnoSelect')  
+                 'noActnoInfnoKindnoSelect',
+                 'baseline')  
 
 # Replace the predictions with the model_names2 (this is fine because the presence or absence of the other modules remains same)
-colnames(df)[9:16] <- model_names2
+df <- df %>% relocate(baseline, .before = Actual)
+colnames(df)[9:17] <- model_names2
 
 results2 <- optimize_models2(model_names2, df)
 
@@ -418,5 +416,5 @@ fitforplot[, 22][is.na(fitforplot[, 22])] <- FALSE
 ```
 
 ```{r}
-write.csv(fitforplot, '../model_data/fitforplot16m.csv')  
+write.csv(fitforplot, '../model_data/fitforplot16mpn.csv')  
 ```

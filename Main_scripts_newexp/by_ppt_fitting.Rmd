@@ -1,0 +1,125 @@
+---
+title: "By participant model fitting"
+output: html_document
+date: "2025-08-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## By participant model fitting
+
+
+```{r, include=FALSE}
+load('../Data/Data.Rdata', verbose = T) # This is one big df, 'df2', 2580, of 215 ppts
+
+df2 <- df2 %>% 
+  unite('trial_id', pgroup, trialtype, sep = "_", remove = FALSE)
+
+#Let's create variables coding the actual observation
+df2.map<-data.frame(condition=c('c1','c2','c3','c4','c5','d1','d2','d3','d4','d5','d6','d7'),
+                   A=c(0,0,1,1,1, 0,0,0,1,1,1,1),
+                   B=c(0,1,0,1,1, 0,1,1,0,0,1,1),
+                   E=c(0,0,0,0,1, 0,0,1,0,1,0,1))
+
+for (i in 1:nrow(df2))
+{
+  df2$A[i]<-df2.map$A[df2.map$condition==df2$trialtype[i]]
+  df2$B[i]<-df2.map$B[df2.map$condition==df2$trialtype[i]]
+  df2$E[i]<-df2.map$E[df2.map$condition==df2$trialtype[i]]
+}
+
+df2 <- df2 %>%
+  mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
+
+# Now select columns you need
+byppt <- df2 %>% select(subject_id, trial_id, node3, include)
+```
+
+```{r}
+df <- read.csv('../model_data/fitforplot16mpn.csv') 
+
+# Now merge to ppts
+ppts <- merge(byppt, df, by = c('trial_id', 'node3'))
+```
+
+what next? 
+Like at the end of modelCombLesions, we need to unit pgroup and trialtype. 
+Then either generate a model prediction for each pgroup and trialtype?
+Then get the NLLs for each participant for each model at a time, but not clear if it should be fitted or not.
+I could try a first version using that pg_tt's score from the general model fitted score, for the pgroup that each ppt got.
+Buut it would not be nlls[i] <-  -sum(log(mpred)*n) because there would not be an n. It would just give a single score for each trial? It still needs the tau and epsilon though in case they selected impossible answers.
+(Also find if there are certain participants who selected mainly impossible answers!)
+Also find a way to plot.
+
+Update - want the model preds fitted to the aggregate group. 
+
+So, split df2 into ppts list
+
+Some ppts did see some conditions more than once - due to a counterbalancing error in the experiment design.
+
+```{r}
+data_list <- split(ppts, ppts$subject_id) # 215 elements each of 12x14
+
+test <- data_list[[2]]
+exclude_cols <- test %>% select (trial_id:X, n:include.y)
+model_names <- c('full', 
+                 'noAct', 
+                 'noInf', 
+                 'noSelect', 
+                 'noActnoInf', 
+                 'noActnoSelect', 
+                 'noInfnoSelect', 
+                 'noActnoInfnoSelect',
+                 'noKind', 
+                 'noActnoKind', 
+                 'noInfnoKind', 
+                 'noKindnoSelect', 
+                 'noActnoInfnoKind', 
+                 'noActnoKindnoSelect', 
+                 'noInfnoKindnoSelect', 
+                 'noActnoInfnoKindnoSelect',
+                 'baseline')  
+
+# Compute all NLLs once per subject, storing both full NLLs and min info together
+results <- lapply(data_list, function(dat) {
+  nlls <- sapply(model_names, function(mod_col) {
+    mpred <- dat[[mod_col]]
+    -sum(log(mpred))
+  })
+  list(
+    nlls = nlls,
+    min_nll = min(nlls),
+    min_model = names(nlls)[which.min(nlls)]
+  )
+})
+
+# Extract min_model vector for later
+best_models <- sapply(results, function(x) x$min_model)
+best_models_df <- data.frame(model = best_models, stringsAsFactors = FALSE)
+
+# Construct a dataframe of all NLLs per subject
+nll_matrix <- t(sapply(results, function(x) x$nlls))
+nll_df <- as.data.frame(nll_matrix)
+rownames(nll_df) <- names(results)
+
+
+```
+
+```{r}
+# Count how many participants have each model as best fit
+summary_table <- best_models_df %>%
+  group_by(model) %>%
+  summarise(participant_count = n()) %>%
+  arrange(desc(participant_count))
+
+# Optional: ensure all 16 models appear even if zero counts
+all_models <- data.frame(model = model_names)
+summary_table_full <- all_models %>%
+  left_join(summary_table, by = "model") %>%
+  mutate(participant_count = ifelse(is.na(participant_count), 0, participant_count))
+
+print(summary_table_full)
+
+```

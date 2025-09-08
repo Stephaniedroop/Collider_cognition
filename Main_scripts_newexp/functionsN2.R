@@ -110,8 +110,7 @@ get_cfs <- function(params, structure, df) {
   #structure <- structure
   p <- params[,2] # The p_eachvar==1 
   pvec <- rep(p, times = N_cf) # Turn it into a 40k vec
-  #p_vec_prime <- (1-sens)*rep(.5, length(pvec)) + sens * pvec
-  mp <- df 
+  mp <- df %>% relocate(Au, .before = B) # assuming we can do it in one line - reassignment takes a lot of time
   # Add new columns then fill them
   new_cols <- c('mA', 'mAu', 'mB', 'mBu', 'cfsA', 'cfaAu', 'cfsB', 'cfsBu', 'Sum')
   mp[new_cols] <- NA
@@ -122,17 +121,17 @@ get_cfs <- function(params, structure, df) {
   {
     # STABILITY: Generate vector of random numbers. The ones outside stability s are to be resampled. Put T for them
     resample <- runif(n_causes*N_cf) > s # 40k vec, with T for ones higher than the stability param 
-    # Take the current case
-    case <- df[c_ix,] # one obs of 8 - the real world. No, 18
-    # Repeat the cause settings of the current world 10000 times
+    # Take the current case as the real world
+    case <- mp[c_ix,] 
+    # Repeat the cause settings of the current world, to be cf sampled
     cf_csrep <- rep(as.numeric(case[1:n_causes]), times = N_cf) # 40k vec
     # Now resample from its prior each value whose place in resample was set to TRUE in stability step
-    cf_csrep[resample] <- rbinom(sum(resample), size = 1, prob = pvec[resample]) #runif(sum(resample)) < pvec[resample] 
+    cf_csrep[resample] <- rbinom(sum(resample), size = 1, prob = pvec[resample])  
     # Express these generated counterfactuals in tabular form again
     cfs <- data.frame(matrix(cf_csrep, nrow = N_cf, byrow = T))
     colnames(cfs) <- causes1
     
-    # Calculate effect (determinative)
+    # Recalculate determinative effect for these simulated cf worlds
     if (structure=="conjunctive") { 
       cfs$E <- as.numeric((cfs[1] & cfs[2]) & (cfs[3] & cfs[4])) 
     }
@@ -140,17 +139,18 @@ get_cfs <- function(params, structure, df) {
       cfs$E <- as.numeric((cfs[1] & cfs[2]) | (cfs[3] & cfs[4])) 
     }
    
-    # Add column T/F for the ones that match
+    # Add column T/F for whether the Effect in the cf worlds matches the real world
     cfs$Match <- cfs$E==case$E.x
-    
+    # Set up empty vector of correlations (ie causal effect sizes), one for each cause
     cor_sizes <- rep(NA, n_causes)
     realcfs <- rep(NA, n_causes)
     for (cause in 1:n_causes)
     {
-      # the second part sets correlation negative when cause pushes against effect taking state it took
-      cor_sizes[cause] <- cor(cfs[[causes1[cause]]], cfs$Match) * (c(-1,1)[as.numeric(case[[causes1[cause]]])+1])
+      # ..And then populate! (the second part sets correlation negative when cause pushes against effect taking state it took)
+      cor_sizes[cause] <- cor(cfs[[causes1[cause]]], cfs$Match, method = 'pearson') * (c(-1,1)[as.numeric(case[[causes1[cause]]])+1])
       realcfs[cause] <- sum(cfs[[causes1[cause]]]!=case[[causes1[cause]]])
     }
+    # Now put these correlations in the mp df, along with the number of actual cfs simulated, and how many times the Effect matched 
     mp[c_ix, 18:21] <- t(cor_sizes)
     mp[c_ix, 22:25] <- t(realcfs)
     mp[c_ix, 26] <- sum(cfs$E==case$E.x)
@@ -242,38 +242,35 @@ get_cfs_simpleprior <- function(params, structure, df) {
   
 }
 
-# ---------- Better: anchors on the actual world ---------------
+# ---------- Anchors on the actual world ---------------
 
+# Takes input of prior prob params 0/1, structure ('conjunctive','disjunctive') and a df made by 'world_combos3' above.
+# Naively you'd think the df has to be 16, but here do it for 20 (conj: 5x4) or 28 (disj: 7x4) rows because we need all combinations of unobserved vars for each SEM
 get_cfs_ql <- function(params, structure, df) { # 
   n_causes <- nrow(params)
   p <- params[,2] # The p_eachvar==1 
-  pvec <- rep(p, times = N_cf) # Turn it into a 40k vec - NO - this will be 1-p when V=0 (actually fine?)
-  # STEP a) Simulate worlds from the causal model - do for every actual world in the df
-  # Loop through 16 possible world settings (watch out for old way was 20/28 rows, not sure if that's important)
-  # Make a df of all combinations of variable settings
-  #df <- expand.grid(rep(list(c(0,1)),n_causes), KEEP.OUT.ATTRS = F)
-  worlds <- nrow(df) # Or maybe should do it for worlds in the dfd/c which are expanded for all combinations
-  mp <- df
+  pvec <- rep(p, times = N_cf) # Turn it into a 40k vec 
+  worlds <- nrow(df) 
+  mp <- df %>% relocate(Au, .before = B) # assuming we can do it in one line - reassignment takes a lot of time
   # Add new columns then fill them
   new_cols <- c('mA', 'mAu', 'mB', 'mBu', 'cfsA', 'cfaAu', 'cfsB', 'cfsBu', 'Sum')
   mp[new_cols] <- NA
-  #worlds <- nrow(df) #as.integer(nrow(df)/2)
+  
+  # This whole loop calculates cfs and effects anchored on each 'real world'
+  
+  # STEP a) Simulate worlds from the causal model 
   for (c_ix in 1:worlds)
   { 
     # STABILITY: Generate vector of random numbers. The ones outside stability s are to be resampled. Put T for them
     resample <- runif(n_causes*N_cf) > s # 40k vec, with T for ones higher than the stability param 
     # Take the current case
-    case <- df[c_ix,]
+    case <- mp[c_ix,]
     # Repeat the cause settings of the current world 10000 times
     case_vec <- rep(as.numeric(case[1:n_causes]), times = N_cf) # 40k vec
     
     # Now resample from its prior each value whose place in resample was set to TRUE in stability step
     case_vec[resample] <- rbinom(sum(resample), size = 1, prob = pvec[resample]) 
     mat <- matrix(case_vec, nrow = N_cf, ncol = n_causes, byrow = TRUE)
-    
-    # Set E as per structural equations - change if CONJ/DISJ
-    #conj_E <- as.numeric((mat[,1] & mat[,2]) & (mat[,3] & mat[,4]))
-    #disj_E <- as.numeric((mat[,1] & mat[,2]) | (mat[,3] & mat[,4]))
     
     # Calculate effect (determinative)
     if (structure=="conjunctive") { 
@@ -286,11 +283,9 @@ get_cfs_ql <- function(params, structure, df) { #
     # Get the standard deviations 
     sds <- apply(mat, 2, sd)
     sdE <- sd(E)
-    #sddE <- sd(E)
     
-    # get the standardising factors (needed in step c)
+    # Get the standardising factors (needed in step c)
     sd_f <- sds/sdE
-    #sd_c <- sds/sdcE
     
     # STEP b) Simulate counterfactual twin worlds all at once: the same size vector this time all 0.5
     twins <- matrix(rbinom(N_cf * n_causes, size = 1, prob = 0.5), nrow = N_cf, ncol = n_causes)
@@ -313,14 +308,6 @@ get_cfs_ql <- function(params, structure, df) { #
     # Then wrap into a matrix
     matE <- cbind(nC1E, nC2E, nC3E, nC4E)
     
-    # (Then do the same for the disjunctive SEMs)
-    # nC1dE <- as.numeric((twins[,1] & mat[,2]) | (mat[,3] & mat[,4]))
-    # nC2dE <- as.numeric((mat[,1] & twins[,2]) | (mat[,3] & mat[,4]))
-    # nC3dE <- as.numeric((mat[,1] & mat[,2]) | (twins[,3] & mat[,4]))
-    # nC4dE <- as.numeric((mat[,1] & mat[,2]) | (mat[,3] & twins[,4]))
-    # # Then wrap into a matrix
-    # matdE <- cbind(nC1dE, nC2dE, nC3dE, nC4dE)
-    
     # STEP c) Compute specific causal effect for each pair of worlds
     
     # First the change in E:
@@ -330,27 +317,19 @@ get_cfs_ql <- function(params, structure, df) { #
     deltaC <- twins-mat
     
     # Ratio of change
-    ratio <- deltaE/deltaC # Five possible values: NaN, -Inf, 0, -1, Inf, 1
-    #ratio_d <- deltaEd/deltaC
+    ratio <- deltaE/deltaC # It produces one of five possible values: NaN, -Inf, 0, -1, Inf, 1
     
     # Replace the /0 ones with NA
     ratio[is.infinite(ratio)] <- NA
-    #ratio_d[is.infinite(ratio_d)] <- NA
     
     # Multiply the ratios by the standardising factors to get Specific Causal Effect
     sce <- sweep(ratio, 2, sd_f, '*')
-    #sce_d <- sweep(ratio_d, 2, sd_d, '*')
     
     # STEP d) Compute causal score by averaging across worlds
     k <- colSums(sce, na.rm = TRUE) / N_cf 
-    #kd <- colSums(sce_d, na.rm = TRUE) / N_cf 
     mp[c_ix, 18:21] <- t(k)
-    #mp[c_ix, 22:25] <- t(realcfs)
-    #mp[c_ix, 26] <- sum(cfs$E==case$E.x)
     mp$index <- 1:nrow(mp)
   }
   mp
 }
-
-# NOTES to redo
   

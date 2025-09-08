@@ -13,10 +13,9 @@ library(tidyverse)
 ## Check item level correlation and other summary reporting statistics.
 
 ```{r, include=FALSE}
-df <- read.csv('modelAndDataUnfit.csv') # 288 obs of 14
+df <- read.csv('../model_data/modelAndDataUnfitpn.csv') # 288 obs of 17
 
 ```
-
 
 Now a chi-sq for anti-uniform fit. Need to first group by world, and do a series of 36 chisq.
 
@@ -34,7 +33,36 @@ results <- df %>%
 
 print(results)
 
+print(min(results$chi_sq_stat)) # 50.5
+print(max(results$p_adj)) # 4e-7
+
 ```
+
+
+# Now Actual
+
+```{r}
+df$Actual[is.na(df$Actual)] <- FALSE
+
+res <- df %>% group_by(Actual) %>% summarise(n=sum(n)) # 1972 / 608 = 2580
+
+print(chisq.test(res$n, p=c(0.5,0.5)))
+```
+
+
+# Unobserved
+
+```{r}
+df <- df %>% mutate(Observed = factor(!node3%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(T,F)))
+# Then, like res
+unobs <- df %>% group_by(Observed) %>% summarise(n=sum(n)) # 1152 / 1428 = 55.3%
+
+print(chisq.test(unobs$n, p=c(0.5,0.5)))
+
+```
+
+
+
 
 An old one for the df as a whole: we don't use this any more:
 

@@ -22,7 +22,7 @@ Most of this script is reused chunks from the first collider experiments's `main
 First you need to set wd to the source, then a chunk takes it to the data folder to list and get the csv's, then bring back the wd to current again.
 
 ```{r}
-setwd("../new") # as in, setwd("/Users/stephaniedroop/Documents/GitHub/Collider_cognition/Data/newexp")
+setwd("../Data/new") # as in, setwd("/Users/stephaniedroop/Documents/GitHub/Collider_cognition/Data/newexp")
 ```
 
 ```{r}
@@ -97,6 +97,18 @@ df <- df %>% mutate(structure = if_else(grepl("^c", trialtype), 'conjunctive', '
 df <- df %>% select(-c(2:4,6,7,18,19))
 ```
 
+A chunk to check that each ppt did each condition once 
+
+```{r}
+check <- df %>%
+  group_by(subject_id, trialtype) %>%
+  filter(n() > 1) %>%
+  distinct(subject_id, trialtype)
+
+# It says 0, so any I find later must be a mistake - need to chase them
+```
+
+
 ```{r}
 
 # --------------- Processing the answers participants gave -----------------
@@ -139,7 +151,30 @@ df <- df %>% mutate(ans = if_else(scenario=='job', match(df$answer, jobanswers),
                                             match(df$answer, groupanswers))))
 ```
 
-# Reversing the counterbalancing just like last time
+# Reversing the counterbalancing
+
+var probs = [
+  [
+    ['10%', '50%', '80%', '50%'],
+    ['50%', '10%', '50%', '80%'],
+    ['10%', '70%', '80%', '50%'],
+  ],
+  [
+    ['80%', '50%', '10%', '50%'],
+    ['50%', '80%', '50%', '10%'],
+    ['80%', '50%', '10%', '70%'],
+  ],
+];
+
+Basically, if cb==0, they got the first set, and that's all fine... But if cb==1 then 1&2 need to swap with 3&4.
+
+However it is more complicated than that, for some conditions that are not quite symmetrical. They need a bit extra help to shifty.
+The problem is that if a person already did a trialtype in data0, then they get switched to it in data1, then their data will have two ostensibly of the same trial. This is still necessary and probably not a problem.
+
+The trialtypes are: equivalent: 
+c2 and c3 (010 and 100)
+d2 and d4 (010 and 100)
+d3 and d5 (011 and 101)
 
 ```{r}
 data0 <- df %>% filter(cb==0)
@@ -179,6 +214,15 @@ data1 <- data1 %>% select(1:7,13,14,16)
 data0 <- data0 %>% select(1:7,14,13,15) # 1:6,14,13,15
 
 df2 <- rbind(data0,data1) # 2640 of 9
+```
+
+Run that check again because something is weird! My cb must be off
+```{r}
+check2 <- df2 %>%
+  group_by(subject_id, trialtype) %>%
+  filter(n() > 1) %>%
+  distinct(subject_id, trialtype)
+
 ```
 
 ```{r}

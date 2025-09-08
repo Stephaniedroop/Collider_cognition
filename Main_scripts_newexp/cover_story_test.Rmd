@@ -27,53 +27,19 @@ The underlying laptop files for Feature B are sometimes corrupted: they only wor
 
 ```{r, include=FALSE}
 # set working directory: 
-setwd("~/Documents/GitHub/Collider_cognition/Main_scripts_newexp")
+#setwd("~/Documents/GitHub/Collider_cognition/Main_scripts_newexp")
 df2 <- read.csv("../Data/ppts.csv")
 ansprops <- df2 %>% group_by(pgroup, trialtype, scenario, node3) %>% summarise(n=n())
 
 names <- c(1:4)
 ansprops[,names] <- lapply(ansprops[,names] , factor)
 
+groupprops <- ansprops %>% group_by(pgroup) %>% summarise(n=n()) # 194, 212, 210. Next try within trialtype?
+ttprops <- ansprops %>% group_by(pgroup, scenario, trialtype) %>% summarise(n=n()) # Each cell has 3-8, m+sd 5.7 + 1.14
+
+ttgrp <- ansprops %>% group_by(pgroup, trialtype) %>% summarise(n=n()) # 13-21, m+sd 17.1 +2.0
 ```
 
-
-```{r, echo=FALSE}
-# This is pgroup 1
-# ggplot(ansprops %>% filter(pgroup==1), 
-#        aes(x = node3, y = n, fill = scenario)) +
-#   geom_bar(stat = "identity", position = position_dodge()) +
-#   labs(x = "Node answered", y = "Count of Answers", fill = "Cover story scenario") +
-#   facet_wrap(~trialtype) +
-#   theme_minimal() +
-#   theme(panel.grid = element_blank(),
-#                axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-```
-
-
-
-```{r, echo=FALSE}
-# This is pgroup 2
-# ggplot(ansprops %>% filter(pgroup==1), 
-#        aes(x = node3, y = n, fill = scenario)) +
-#   geom_bar(stat = "identity", position = position_dodge()) +
-#   labs(x = "Node answered", y = "Count of Answers", fill = "Cover story scenario") +
-#   facet_wrap(~trialtype) +
-#   theme_minimal() +
-#   theme(panel.grid = element_blank(),
-#                axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-```
-
-
-```{r, echo=FALSE}
-# ggplot(ansprops %>% filter(pgroup==3), 
-#        aes(x = node3, y = n, fill = scenario)) +
-#   geom_bar(stat = "identity", position = position_dodge()) +
-#   labs(x = "Node answered", y = "Count of Answers", fill = "Cover story scenario") +
-#   facet_wrap(~trialtype) +
-#   theme_minimal() +
-#   theme(panel.grid = element_blank(),
-#                axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-```
 
 ### STATISTICAL TEST
 

@@ -19,7 +19,7 @@ rm(list=ls())
 # Demographics are in the `preprocessing` file
 
 source('preprocessing.Rmd') # Takes individual csvs, collates them, performs reconciliation with prolific report
-source('cover_story_test.Rmd') # Freestanding analysis to check if cover story affects answers (hint = it doesn't - except in the overdetermined d111 condition!)
+source('cover_story_test.Rmd') # Freestanding analysis to check if cover story affects answers (it doesn't - except in 2/36 conditions, which can be ascribed to noise)
 
 # Setwd back again - it might still be in the previous script's one 
 # (which it needed there to use a nifty one line to get the data docs out and together)
@@ -30,20 +30,9 @@ source('set_params.R')
 
 source('get_model_preds4.R') # 
 # Takes the probability vectors of settings of the variables from `set_params.R`. 
-# Also loads source file `functionsN1.R` for 2 static functions which 1) generate world settings then 
-# model predictions for those and normalise/condition for unobserved variables
+# Also loads source file `functionsN2.R` for 2 static functions which 1) generate world settings then CESM predictions
 
-# Btw, go back to Tadeg's version and re-implement using his version
-
-N <- 10^4
-v <- rbinom(N,1,.3) 
-sd_v <- sd(v)
-
-
-
-# Process model predictions to be more user friendly: 
-# Takes average of 10 model runs
-# Wrangles and renames variables, splits out node values 0 and 1
+# Process model predictions to be more user friendly: take average of 10 model runs, wrangles and renames variables, splits out node values 0 and 1
 source('modpred_processing2.R')  #  
 
 

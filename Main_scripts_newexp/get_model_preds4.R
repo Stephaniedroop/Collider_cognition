@@ -26,43 +26,36 @@ source('functionsN2.R')
 
 set.seed(12)
 
-# -------------- Full cesm - what we started with ----------
+# -------------- Full CESM ----------
 
 # Empty df to put everything in
 all <- data.frame(matrix(ncol=27, nrow = 0)) # needs to be 10 longer than df
 
 # For each setting of possible probability parameters we want to: 
-# 1) generate worlds, 2) get conditional probabilities and 3) get model predictions
+# 1) generate worlds, 2) get CESM model predictions
 for (i in 1:length(poss_params)) { 
   # 1) Get possible world combos of two observed variables in both dis and conj structures
   dfd <- world_combos3(params = poss_params[[i]], structure = 'disjunctive')
   dfd$pgroup <- i
   dfc <- world_combos3(params = poss_params[[i]], structure = 'conjunctive')
   dfc$pgroup <- i
-  # 2) Get conditional probabilities of these and the two unobserved variables too
-  # newdfd <- get_cond_probs2(dfd)
-  # newdfc <- get_cond_probs2(dfc)
-  
+  # Empty df to put model predictions in
   mp1 <- data.frame(matrix(ncol = 27, nrow = 0)) # was 27
   # 3) Get predictions of the counterfactual effect size model for these worlds 
-      # We also want to calculate like 10 versions to get the variance of model predictions IT SHOULD BE RUNNING ON NEWDFD ETC
-  for (m in 1:modelruns) {
-    mpd <- get_cfs(params = poss_params[[i]], structure = 'disjunctive', df = dfd) # 16 obs of 6
+      # We also want to calculate 10 versions to get the variance of model predictions 
+  for (m in 1:modelruns) { 
+    # If you want to test the Quillien and Lucas 2023 'General version' of CESM, replace 'get_cfs' with 'get_cfs_ql'
+    mpd <- get_cfs_ql(params = poss_params[[i]], structure = 'disjunctive', df = dfd) 
     mpd$run <- m
-    mpc <- get_cfs(params = poss_params[[i]], structure = 'conjunctive', df = dfc)
+    mpc <- get_cfs_ql(params = poss_params[[i]], structure = 'conjunctive', df = dfc)
     mpc$run <- m
     mp1 <- rbind(mp1, mpd, mpc)
   }
-  #mp1$pgroup <- i
+  mp1$pgroup <- i
   all <- rbind(all, mp1)  # 1440 of 26
 } 
 # It takes a minute or two but not terrible.
-# saves intermediate set of world setup and model predictions
-#write.csv(all, "../model_data/allnew1.csv") # 1920 of 29
-write.csv(all, "../model_data/allbinom.csv") # 1440 of 27
 
-# Big finding: the new version is half the scores of the old finding for C=E (ie actual causes).
-# This probably because the simulation of cfs only uses half, because some /0
-# Question is whether this is important once it gets softmaxed
-# For the ones C!=E, the Neil function has a flip to make it negative. Is this better? Otherwise they are mostly the same
-# Try model fit with QL version
+write.csv(all, "../model_data/allpn.csv") # 1440 of 27
+
+# 
