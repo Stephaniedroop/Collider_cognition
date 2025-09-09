@@ -1,0 +1,94 @@
+---
+title: "sample_predictions"
+output: html_document
+date: "2025-09-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Generate samples from the model
+
+The model predictions are currently probability distributions spread over the 8 node values (the 8 explanations for each possible outcome). We want to force the model to give an actual answer, to pair with each participant's observation. This cannot just be the same probability each time, but must have the chance to show up as a differnet node, proportional to its probability. It must be SAMPLED.
+
+This needs the participant data by row, and then the model data too. 
+
+There's more! NO need to modify the data in every script. Let's go back and do it in a oner.
+
+```{r}
+# Get model data
+#df <- read.csv('../model_data/modelAndDataUnfitpn.csv') # 288 obs of 21
+df <- read.csv('../model_data/fitforplot16mpn.csv') # 288 obs of 28
+
+# Get participant data
+load('../Data/Data.Rdata', verbose = T) # This is one big df2, 2580 of 14
+
+datfortest <- df2 %>% select(subject_id, trial_id, node3, include)
+
+justmp <- df %>% select(trial_id, node3, full)
+
+# 39x9 - just the full model, in wide form
+model_predictions_wide <- justmp %>% 
+  pivot_wider(
+    names_from = node3,
+    values_from = full
+  )
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+library(dplyr)
+
+# Step 1: Extract variable names (probability columns) explicitly, excluding join key
+variable_names <- setdiff(names(model_predictions_wide), "trial_id")
+
+# Step 2: Define sampling function to pick one variable name based on probabilities
+sample_variable_name <- function(probabilities, variable_names) {
+  # probabilities: numeric vector for one row
+  # variable_names: character vector of column names
+  sampled_name <- sample(
+    x = variable_names,
+    size = 1,
+    prob = as.numeric(probabilities)
+  )
+  return(as.character(sampled_name))
+}
+
+# Step 3: Join participant data with model predictions by condition ('pg_tt'),
+# then for each participant (row), sample one variable name according to probabilities for their condition
+sampled_predictions <- datfortest %>%
+  left_join(model_predictions_wide, by = "trial_id") %>%
+  rowwise() %>%
+  mutate(
+    # Select only the probability columns for sampling
+    sampled_variable = sample_variable_name(
+      probabilities = c_across(all_of(variable_names)),
+      variable_names = variable_names
+    )
+  ) %>%
+  ungroup() %>%
+  select(subject_id, trial_id, sampled_variable)  # CHANGE THIS????
+
+# Step 4: (optional) Inspect distribution of sampled variables by condition
+prediction_distribution <- sampled_predictions %>%
+  group_by(trial_id, sampled_variable) %>%
+  summarize(count = n(), .groups = "drop")
+
+print(prediction_distribution)
+
+```
+
+Now merge back in to real participant data. Depends what analysis we will then do
+
+```{r}
+
+```

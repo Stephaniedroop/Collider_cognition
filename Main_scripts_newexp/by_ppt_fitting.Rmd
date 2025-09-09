@@ -14,26 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, include=FALSE}
 load('../Data/Data.Rdata', verbose = T) # This is one big df, 'df2', 2580, of 215 ppts
 
-df2 <- df2 %>% 
-  unite('trial_id', pgroup, trialtype, sep = "_", remove = FALSE)
-
-#Let's create variables coding the actual observation
-df2.map<-data.frame(condition=c('c1','c2','c3','c4','c5','d1','d2','d3','d4','d5','d6','d7'),
-                   A=c(0,0,1,1,1, 0,0,0,1,1,1,1),
-                   B=c(0,1,0,1,1, 0,1,1,0,0,1,1),
-                   E=c(0,0,0,0,1, 0,0,1,0,1,0,1))
-
-for (i in 1:nrow(df2))
-{
-  df2$A[i]<-df2.map$A[df2.map$condition==df2$trialtype[i]]
-  df2$B[i]<-df2.map$B[df2.map$condition==df2$trialtype[i]]
-  df2$E[i]<-df2.map$E[df2.map$condition==df2$trialtype[i]]
-}
-
-df2 <- df2 %>%
-  mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
-
-# Now select columns you need
+# Now select just the columns you need
 byppt <- df2 %>% select(subject_id, trial_id, node3, include)
 ```
 

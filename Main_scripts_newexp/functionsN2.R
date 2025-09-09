@@ -2,7 +2,8 @@
 ################### GW - general CESM functions ###########################
 
 # Functions to run counterfactual simulation and assign a quantity of responsibility to each of several causes.
-# 1) function that calculates all possible observations of the causes ('worlds') and gets conditional probabilities and posterior
+# 1) function that calculates all possible combinations of the causes ('worlds') and gets conditional probabilities and posterior
+# It does not do just the observable combinations but also ones where posterior=0; these are needed later
 # Needs inputs of:
 # -- cause variables, assuming these happen either 0,1 and their strengths, assuming in a vector of prob 0, prob 1
 # -- causal structure, whether disjunctive or conjunctive
@@ -10,10 +11,6 @@
 # 2) function to get counterfactuals and effect size:
 # -- simulates counterfactuals by resampling from the prior for vars with p=1-s where s=stability to real world.
 # -- prints out correlation of effect with each causal variable across these simulated counterfactual worlds.
-
-# 'N' stands for NEW: the old file had a direct dependency function and two parameters for model prediction, stability and sensitivity.
-# In Jan25 we decided to restrict to stab0.7 and sens1 (ie no sens). So reran. 
-# Also need to expand f2 to allow all combinations, for a later model lesion
 
 # ------------- Create world combos df ----------------- 
 # A function to get all world combinations
@@ -79,23 +76,7 @@ world_combos3 <- function(params, structure) {
     ungroup() 
   
   df1
-  # Kept this just in case we still need to give a group id
-  #df <- df %>% group_by(A, B, E, .drop=F) #%>% mutate(groupPost = cur_group_id(), posterior = PrUn/sum(PrUn)) %>% ungroup() 
-} # Makes it of 16 vars
-
-# CURRENT WORRY SEPT 25 IS THIS GIVES 20 V 28 ROWS, NOT JUST ALL THE WORLD COMBOS, SO CAN'T GET MODEL PREDS ON IT???
-
-# Notes on realLatent
-# Sometimes the values of the unobserved variables can be inferred logically. These are NOT 'realLatent'.
-# realLatent is when we genuinely don't know what values the unobserved variables take. (when poss >1 in the function `get_cond_probs`)
-# It affects the following situations (easier to point out when it is NOT realLatent, and take the inverse)
-# All are realLatent, except:
-# c5: Au and Bu
-# d2: Bu
-# d3: Bu
-# d4: Au
-# d5: Au
-# d6L Au and Bu
+} 
 
 # ------------- CESM FUNCTION ----------------------------
 # A function to run the generic minimal CESM. Takes arguments of:
@@ -106,8 +87,6 @@ world_combos3 <- function(params, structure) {
 # This used to be big function generic_cesm 
 get_cfs <- function(params, structure, df) { 
   n_causes <- nrow(params)
-  #causes <- rownames(params)
-  #structure <- structure
   p <- params[,2] # The p_eachvar==1 
   pvec <- rep(p, times = N_cf) # Turn it into a 40k vec
   mp <- df %>% relocate(Au, .before = B) # assuming we can do it in one line - reassignment takes a lot of time

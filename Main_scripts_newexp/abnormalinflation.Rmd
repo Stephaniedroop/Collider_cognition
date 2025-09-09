@@ -27,9 +27,6 @@ Although our causal structures are complicated by the unobserved variables, we c
 # Get participant data
 load('../Data/Data.Rdata', verbose = T) # This is one big df2, 2580 of 14
 
-data <- df2 %>% 
-  unite('pg_tt', pgroup, trialtype, sep = "_", remove = FALSE)
-
 ```
 
 Filter this down to the trialtypes d7 and c5 (which are the disjunctive and conjunctive ones where 'everything happened', 111).

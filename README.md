@@ -40,7 +40,7 @@ The masterscript sources scripts in the following order:
 3. Other modelling
 
 - `modelCombLesions.Rmd` calculates the _inference_, _computational kindness_ and _actual causality_ parts of the full models, then progressively lesions these modules and combines with participant data. Input `tidied_predpn.csv` and `Data.Rdata`, output `modelAndDataUnfitpn.csv`.
-- `optimise_withKandEps.Rmd` fits and optimises models. Input `modelAndDataUnfitpn.csv`, output `fitforplot16mpn`.
+- `optimise_withKandEps.Rmd` fits and optimises models. Input `modelAndDataUnfitpn.csv`, output `fitforplot16mpn.csv`.
 - `reportingFigs16.Rmd` generates plots. Input `fitforplot16mpn`, output many figures saved in folder `figs`. See script for naming conventions. Suggestion for use: open .Rmd file and knit to html to see all the plots first OR see already-output plots in `figs` folder.
 - `by_ppt_fitting.Rmd` calculates likelihood for each participant, of the models fit to aggregate data. Input `Data.Rdata` and `fitforplot16mpn`. Output: table of results in the console
 

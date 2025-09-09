@@ -47,6 +47,7 @@ source('reportingFigs16.Rmd')
 # Some earlier checks 
 source('itemLevelChisq.Rmd') # Check ppt n against a uniform distribution
 source('abnormalInflation.Rmd') # Is the phenomenon found in our results?
+source('samplePredictions.Rmd')
 
 
 

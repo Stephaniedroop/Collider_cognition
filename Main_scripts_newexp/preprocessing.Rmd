@@ -42,8 +42,8 @@ csvList <- lapply(csvList, function(df) {
 })
 
 # An initial data file. (It still needs to be filtered for complete ppts and reconciled with prolific account of who was paid, below)
-df1 <- do.call(rbind, csvList)
-dfq <- df1 %>% group_by(prolific_id) %>% summarise(n=n()) %>% filter(n==24)
+df1 <- do.call(rbind, csvList) # 5184 obs
+dfq <- df1 %>% group_by(prolific_id) %>% summarise(n=n()) %>% filter(n==24) # 216 
 df1 <- df1 %>% filter(prolific_id %in% dfq$prolific_id) # 5184
 ```
 
@@ -105,7 +105,7 @@ check <- df %>%
   filter(n() > 1) %>%
   distinct(subject_id, trialtype)
 
-# It says 0, so any I find later must be a mistake - need to chase them
+# It says 0, so that's nice
 ```
 
 
@@ -209,21 +209,11 @@ data1$intans <- data1$ans
 data1 <- data1 %>% mutate(anscb = if_else(ans %in% aans, intans+4, intans-4))
 data1 <- data1 %>% select(-c(trialtype,ans)) %>% rename(trialtype = cbtt, ans = anscb)
 
-# Now rearrange the cols we need
-data1 <- data1 %>% select(1:7,13,14,16)
-data0 <- data0 %>% select(1:7,14,13,15) # 1:6,14,13,15
+data1 <- data1 %>% select(-intans)
 
 df2 <- rbind(data0,data1) # 2640 of 9
 ```
 
-Run that check again because something is weird! My cb must be off
-```{r}
-check2 <- df2 %>%
-  group_by(subject_id, trialtype) %>%
-  filter(n() > 1) %>%
-  distinct(subject_id, trialtype)
-
-```
 
 ```{r}
 # Map the answers they gave to the variables, in three increasing levels of granularity
@@ -259,11 +249,21 @@ df2 <- df2 %>%
   mutate(pgroup = if_else(prob0=='10%' & prob1=='50%' | prob2=='10%' & prob3=='50%', '1', 
                                          if_else(prob0=='50%' & prob1=='80%' | prob2=='50%' & prob3=='80%', '2', '3')))
 
+# And make a unique trial-pgroup identifier for easier modelling and plotting later
+df2 <- df2 %>% 
+  unite('trial_id', pgroup, trialtype, sep = "_", remove = FALSE)
+
+df2 <- df2 %>%
+  mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
+
 ```
 
 
 ```{r}
 save(df2, file="../Data.Rdata")
 write.csv(df2, "../ppts.csv") 
+
+# Then set wd back to how you found it
+setwd("~/Documents/GitHub/Collider_cognition/Main_scripts_newexp")
 ```
 
