@@ -358,6 +358,12 @@ ggsave(plotname, plot = p)
 ```
 
 
+## Other analyses
+
+**HOWEVER!!** beware: all these plots are made from just the aggregate normalised probabilities. They are not made from *sampled explanations* sampled from the model matched to each participant and condition observation. They are much less sophisticated. That further sampling has been done but the plots have not been made yet. TO DO Weds 10 Sept.
+
+
+
 Now just observed v unobserved for everything together, noKind model. It needs chunks to calculate separate long and sumamry dfs for the new se values - they are different because different numbers of observations in the means.
 
 ```{r, echo=FALSE}

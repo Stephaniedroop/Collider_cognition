@@ -6,6 +6,8 @@ date: "2025-09-09"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lmerTest)
 ```
 
 ## Generate samples from the model
@@ -85,10 +87,52 @@ prediction_distribution <- sampled_predictions %>%
 
 print(prediction_distribution)
 
+#sampled_predictions <- sampled_predictions[!duplicated(sampled_predictions[, c("subject_id", "trial_id", "sampled_variable")]), ]
+
+
 ```
 
-Now merge back in to real participant data. Depends what analysis we will then do
+Now merge back in to real participant data. This is for binomial logistic regression so needs certain vars like UNOBSERVED to be 1/0. Not sure what else we will use this for?
 
 ```{r}
+modAndDat <- merge(df2, sampled_predictions, by = c("subject_id", "trial_id"), all.x = T)
 
+modAndDat <- modAndDat[!duplicated(modAndDat[, c("subject_id", "trial_id", "sampled_variable")]), ] # For some reason 2556 not 2580?! Moving on for now...
+
+# Assign variables
+modAndDat <- modAndDat %>% mutate(Observed = factor(!node3%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(T,F)))
+
+# No actually we need it long
+modAndDat2 <- merge(datfortest, sampled_predictions) %>% rename(participants = node3, model = sampled_variable)
+
+# Pivot longer
+fortest <- pivot_longer(modAndDat2, cols = -c(subject_id, trial_id, include),
+                        names_to = "respondent",
+                                       values_to = "response")
+
+fortest <- fortest %>% mutate(Observed = factor(!response%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(TRUE, FALSE)))
 ```
+
+Now do the regression. It shows participants select OBSERVED less often than predicted by the model. This is reported in the section `Unobserved vs observed variables` section.
+
+```{r}
+predU <- glmer(Observed ~ respondent + (1|subject_id) + (1|trial_id), data = fortest, family = binomial(link='logit'))
+
+summary(predU)
+
+coef <- fixef(predU) # -0.202
+
+est <- exp(coef) # 0.817 - exp converts logodds to odds. 
+prob <- plogis(coef) # 0.39 - plogis is exp/(1+exp) and converts logodds to probs
+
+se_intercept <- sqrt(diag(vcov(predU))) #["(Intercept)"]
+
+lower_logodds <- coef-(1.96*se_intercept)
+upper_logodds <- coef+(1.96*se_intercept)
+
+lower_or <- exp(lower_logodds)
+upper_or <- exp(upper_logodds)
+```
+
+TODO: what to do with this from now on. Should we also use it for the Actual/non-Actual analysis? It is more sophisticated.
+TO DO: redo the plot for the unobserved section, using this sampled prediction data.
