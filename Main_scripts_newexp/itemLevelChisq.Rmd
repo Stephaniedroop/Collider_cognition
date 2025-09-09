@@ -17,7 +17,12 @@ df <- read.csv('../model_data/modelAndDataUnfitpn.csv') # 288 obs of 17
 
 ```
 
-Now a chi-sq for anti-uniform fit. Need to first group by world, and do a series of 36 chisq.
+As a top-level sanity check that people are answering some sort of question: do they answer differently from uniform?
+We check this by first grouping by world, and then run a series of 36 chi-square tests.
+
+The first section prints a 36 Bonferroni-corrected chisq test results, and finds in every one of the 36 worlds, that people answer in a patterned way, ie. different from uniform or at random.
+
+What that pattern is, is a question for later.
 
 
 ```{r}
@@ -41,6 +46,8 @@ print(max(results$p_adj)) # 4e-7
 
 # Now Actual
 
+Similarly, to get a high level check of how often participants selected ACTUAL causes as their explanation, vs non actual.
+
 ```{r}
 df$Actual[is.na(df$Actual)] <- FALSE
 
@@ -52,26 +59,14 @@ print(chisq.test(res$n, p=c(0.5,0.5)))
 
 # Unobserved
 
+And then again, to get a high-level check of whether they select unobserved causes over observed causes. This is theoretically interesting.
+
 ```{r}
 df <- df %>% mutate(Observed = factor(!node3%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(T,F)))
 # Then, like res
 unobs <- df %>% group_by(Observed) %>% summarise(n=sum(n)) # 1152 / 1428 = 55.3%
 
 print(chisq.test(unobs$n, p=c(0.5,0.5)))
-
-```
-
-
-
-
-An old one for the df as a whole: we don't use this any more:
-
-```{r, include=FALSE}
-observed <- df$n
-expected <- rep((sum(df$n)/length(df$n))/sum(df$n), length(df$n))
-
-chi_sq_result <- chisq.test(x=df$n, p = expected)
-print(chi_sq_result)
 
 ```
 

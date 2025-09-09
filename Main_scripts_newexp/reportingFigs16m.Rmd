@@ -26,7 +26,7 @@ All models have epsilon and tau. First eight have kappa (to go with Kindness).
 ```{r, include=FALSE}
 library(RColorBrewer)
 library(tidyverse)
-library(rlang)
+#library(rlang)
 library(purrr)
 ```
 
@@ -38,7 +38,7 @@ filename <- params$data_file
 # Extract the basename (file name only, no path)
 basestring <- basename(filename)
 # Remove the ".csv" extension and get the last two letters before it
-last_two <- substr(sub("\\.csv$", "", basestring), nchar(basestring) - 5, nchar(basestring) - 3)
+last_two <- substr(sub("\\.csv$", "", basestring), nchar(basestring) - 5, nchar(basestring) - 3) 
 ```
 
 This is a small extra section, you don't need it
