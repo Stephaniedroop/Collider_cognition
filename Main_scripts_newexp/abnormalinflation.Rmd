@@ -1,5 +1,5 @@
 ---
-title: "modelcheckplot"
+title: "abnormalInflation"
 output: html_document
 date: "2025-01-22"
 ---
@@ -92,11 +92,6 @@ So we need a 'normalised probability pair'? Or can we just add eg. .5 and .1, .5
 ```{r}
 dab <- data %>% 
   filter(trialtype %in% c('c5', 'd7'))
-         
-         
-         
-         
-         
 ```
 
 
@@ -129,7 +124,9 @@ dab <- dab %>%
 ```
 
 
-And run a glmer, which shows no difference?
+And run a glmer, which shows no difference! That means one conclusion from the cogsci25 paper (that participants well display abnormal selection) is no longer valid.
+
+However we could do this in a more rigorous way in the model sampling script, like we do for unobserved variables (`sample_predictions.Rmd`).
 
 ```{r}
 predPa <- glmer(P ~ 1 + (1|subject_id) + (1|pg_tt), data = dab, family = binomial(link='logit')) # Also tried with + (1|subject_id) but no difference in fit, has convergence error and looks overparametrised?

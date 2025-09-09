@@ -9,7 +9,7 @@
 
 ## Languages
 
-All scripts are in R, v.4.1. Packages needed: tidyverse, lme4, stringr, [[purrr, ggnewscale, RColorBrewer]] // TO DO check if definitely use these last ones
+All scripts are in R, v.4.1. Packages needed: tidyverse, lme4, lmerTest, stringr, [[purrr, ggnewscale, RColorBrewer]] // TO DO check if definitely use these last ones
 
 ## How to run
 
@@ -48,6 +48,7 @@ The masterscript sources scripts in the following order:
 
 - `abnormalInflation.Rmd` - check for presence of abnormal inflation and deflation (documented behavioural phenomena of causal selection) are found in our data, which would be support for causal selection theory. [Preliminary analysis finds no evidence, unlike in the cogsci paper]. Input `Data.Rdata`, output: table of results in the console.
 - `itemLevelChisq.Rmd` - check whether participants answer non-uniformly in each world. Also contains simple high level checks of whether they reliably answer Actual causes vs Non-Actual, and Observed v UNobserved variables. Input `modelAndDataUnfitpn.csv`, output: table of results in the console.
+- `sample_predictions.Rmd` - get an actual sample from model for each participant trial. \\ coming soon!
 
 (There is also `Main_scripts_oldexp` which has the legacy previous experiment, where unobserved events were not truly unobserved, and their probabilities were conditional on the main event happening. The new experiment improved these points on reviewer suggestion, to make all events independent, and make the observed v unobserved events more obvious in the cover story vignettes).
 
