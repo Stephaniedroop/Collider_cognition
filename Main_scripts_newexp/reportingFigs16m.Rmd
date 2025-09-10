@@ -32,7 +32,12 @@ library(purrr)
 
 ```{r, echo=FALSE}
 rm(list=ls())
-df <- read.csv(params$data_file) # 288 obs of 27 vars 
+df <- read.csv(params$data_file, stringsAsFactors = T) # 288 obs of 27 vars 
+
+# Sometims just for running
+df <- readRDS("../model_data/fitforplot16mpn.RDS") 
+
+
 
 # SOME STRINGS FOR NAMING PLOTS ETC
 filename <- params$data_file 
@@ -167,6 +172,69 @@ ggsave(plotname, plot = plotns)
 
 ## Some more specific plots
 
+### For Neil presentation: just participants
+
+
+```{r, include=FALSE}
+# Define plotting function
+plot_nomodel_pgroup <- function(pgroup_label, df) {
+df_filtered <- df %>% filter(pgroup == pgroup_label) 
+ggplot(df_filtered, aes(x = node3, y = prop, fill = Observed, colour = Actual)) +
+geom_bar(stat = 'identity') +
+geom_errorbar(aes(ymin = prop-SE, ymax = prop+SE), width = .2) +
+labs(
+x = 'Response',
+y = 'Proportion',
+title = sprintf("Participant responses at %s", pgroup_label)
+) +
+scale_fill_brewer(palette = "Set2") + # , labels = c("Observed \n(A|B)", "Unobserved \n(Au|Bu)")
+scale_colour_manual(values = c('gray', 'black')) +
+  guides(fill = guide_legend(override.aes = list(shape = NA))) + 
+#geom_point(aes(y = .data[[model_colname]]), colour = 'black') +
+geom_rect(
+data = subset(df_filtered, trial_structure_type %in% c("Conjunctive: A=1,B=1,E=1", "Disjunctive: A=1,B=1,E=1")),
+fill = NA, colour = "blue", xmin = -Inf, xmax = Inf, linewidth = 2,
+ymin = -Inf, ymax = Inf
+) +
+facet_wrap(~trial_structure_type, ncol = 6) +
+theme_bw() +
+theme(
+panel.grid = element_blank(),
+axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+legend.margin = margin(c(0, 0, 0, 0)),
+axis.title.x = element_text(margin = margin(t = 1, r = 0, b = 0, l = 0)),
+plot.title = element_text(size = 18, face = "bold", hjust = 0.5)
+)
+}
+```
+
+
+And actually do it:
+
+```{r, echo=FALSE, fig.width=12}
+plot1 <- plot_nomodel_pgroup("A=.1,Au=.5,B=.8,Bu=.5", df)
+plot2 <- plot_nomodel_pgroup("A=.5,Au=.1,B=.5,Bu=.8", df)
+plot3 <- plot_nomodel_pgroup('A=.1,Au=.7,B=.8,Bu=.5', df)
+```
+
+```{r, include=FALSE}
+p1 <- paste0("../figs/forN1.pdf")
+ggsave(p1, plot = plot1, width = 12)
+```
+
+```{r, include=FALSE}
+p2 <- paste0("../figs/forN2.pdf")
+ggsave(p2, plot = plot2, width = 12)
+```
+
+```{r, include=FALSE}
+p3 <- paste0("../figs/forN3.pdf")
+ggsave(p3, plot = plot3, width = 12)
+```
+
+
+
+
 ```{r, echo=FALSE, fig.width=12}
 # A different function to compare two models on one plot
 plot_two_models_pgroup <- function(model1, model2, pgroup_label, df) {
@@ -197,7 +265,7 @@ plot_two_models_pgroup <- function(model1, model2, pgroup_label, df) {
     labs(
       x = 'Response',
       y = 'Proportion/Prediction',
-      title = sprintf("Models %s (black) & %s (red) - Parameter Group: %s", model1, model2, pgroup_label)
+      title = sprintf("Models %s (black) & %s (red) at  %s", model1, model2, pgroup_label)
     ) +
     scale_fill_brewer(palette = "Set2") + #, labels = c("Observed \n(A|B)", "Unobserved \n(Au|Bu)")) +
     scale_colour_manual(values = c('gray', 'black')) +
@@ -217,16 +285,25 @@ Usage: compare full and noSelect just for pgroup 3
 
 ```{r, echo=FALSE, fig.width=12}
 # For example, to compare 'full' and 'noSelect' for a given pgroup:
-p <- plot_two_models_pgroup('full', 'noSelect', 'A=.1,Au=.7,B=.8,Bu=.5', df)
-print(p)
+p4 <- plot_two_models_pgroup('full', 'noSelect', 'A=.1,Au=.5,B=.8,Bu=.5', df) #1
+p5 <- plot_two_models_pgroup('full', 'noSelect', 'A=.5,Au=.1,B=.5,Bu=.8', df) #2
+p6 <- plot_two_models_pgroup('full', 'noSelect', 'A=.1,Au=.7,B=.8,Bu=.5', df) #3
 ```
 
 ```{r, include=FALSE}
-plotname <- paste0("../figs/comparefull_noSelect", last_two, ".pdf")
-ggsave(plotname, plot = p)
-
+pc1 <- paste0("../figs/comparefullns1.pdf")
+ggsave(pc1, plot = p4, width = 12)
 ```
 
+```{r, include=FALSE}
+pc2 <- paste0("../figs/comparefullns2.pdf")
+ggsave(pc2, plot = p5, width = 12)
+```
+
+```{r, include=FALSE}
+pc3 <- paste0("../figs/comparefullns3.pdf")
+ggsave(pc3, plot = p6, width = 12)
+```
 
 ## Other analyses
 
