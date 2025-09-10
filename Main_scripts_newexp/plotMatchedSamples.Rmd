@@ -1,0 +1,75 @@
+---
+title: "plotmatchedpreds"
+output: html_document
+date: "2025-09-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## To plot the sampled model explanations by participant
+
+```{r}
+rm(list=ls())
+df <- read.csv('../model_data/forplotbyppt.csv') # 5104 of 14 cos its long
+
+df$trial_id <- as.factor(df$trial_id)
+df$Respondent <- as.factor(df$Respondent)
+df$Observed <- as.factor(df$Observed)
+
+
+```
+
+A quick and dirty plot to check proportions. In fact this exactly reproduces the plot done by using the proportions in the other script!
+
+```{r, echo=FALSE}
+summary_df <- df %>%
+  group_by(Respondent, Observed) %>%
+  summarise(
+    n=n())
+
+ggplot(summary_df, aes(x = Respondent, y = n/2552, fill = Observed)) +
+  geom_bar(stat = "identity", position = "dodge") 
+
+```
+
+Now reproduce the same as the 111fpn plot, where the proportions seem a bit dodgy?! 215 participants
+
+```{r}
+
+df1 <- df %>% group_by(subject_id, Respondent) %>% summarise(n=n())
+```
+
+
+```{r, echo=FALSE, fig.width=12}
+row_labeller <- c(
+  "A=.1,Au=.5,B=.8,Bu=.5"=".1,.5,.8,.5",
+  "A=.5,Au=.1,B=.5,Bu=.8"=".5,.1,.5,.8",
+  "A=.1,Au=.7,B=.8,Bu=.5"=".1,.7,.8,.5"
+)
+
+column_labeller <- c(
+  "Conjunctive: A=1,B=1,E=1"="Conjunctive",
+  "Disjunctive: A=1,B=1,E=1"="Disjunctive"
+)
+
+# FULL
+
+p111f <- ggplot(df %>% filter(trial_structure_type %in% c("Conjunctive: A=1,B=1,E=1", "Disjunctive: A=1,B=1,E=1")), # There was Actual==T here but see no reason for it
+       aes(x=Variable, fill=Observed)) +
+  geom_bar(stat = 'identity', colour = 'black', position = position_dodge()) +
+  #geom_errorbar(aes(ymin=prop-SE, ymax=prop+SE), width=.2, position = position_dodge(.9)) + 
+  labs(x = 'Response', y = 'Proportion/Prediction', title = 'Full model') +
+  scale_fill_brewer(palette = "Set2")+
+  geom_point(data = df %>% filter(trial_structure_type %in% c("Conjunctive: A=1,B=1,E=1", "Disjunctive: A=1,B=1,E=1")), colour = 'black', size = 3, position = position_dodge(.9)) + # also here ', Actual==T' after D111) 
+  facet_grid(trial_structure_type ~ pgroup,
+             labeller = labeller(pgroup = column_labeller, trial_structure_type = row_labeller)) +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        #legend.position = 'none',
+        axis.title.x = element_text(margin = margin(t = 1, r =0, b = 0, l = 0))) 
+
+print(p111f)
+
+```

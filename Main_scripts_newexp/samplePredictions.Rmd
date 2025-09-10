@@ -19,6 +19,8 @@ This needs the participant data by row, and then the model data too.
 There's more! NO need to modify the data in every script. Let's go back and do it in a oner.
 
 ```{r}
+rm(list=ls())
+set.seed(88)
 # Get model data
 #df <- read.csv('../model_data/modelAndDataUnfitpn.csv') # 288 obs of 21
 df <- read.csv('../model_data/fitforplot16mpn.csv') # 288 obs of 28
@@ -26,7 +28,12 @@ df <- read.csv('../model_data/fitforplot16mpn.csv') # 288 obs of 28
 # Get participant data
 load('../Data/Data.Rdata', verbose = T) # This is one big df2, 2580 of 14
 
-datfortest <- df2 %>% select(subject_id, trial_id, node3, include)
+datfortest <- df2 %>% 
+  arrange(subject_id, trial_id) %>% 
+  select(subject_id, trial_id, node3) %>% 
+  group_by(subject_id) %>% 
+  mutate(row_num = row_number()) 
+  
 
 justmp <- df %>% select(trial_id, node3, full)
 
@@ -39,24 +46,13 @@ model_predictions_wide <- justmp %>%
 
 ```
 
+Next section samples a variable as explanation for each participant trial, for that world condition, to match against the participant's answer
 
 ```{r}
-
-```
-
-
-
-
-```{r}
-library(dplyr)
-
-# Step 1: Extract variable names (probability columns) explicitly, excluding join key
 variable_names <- setdiff(names(model_predictions_wide), "trial_id")
 
-# Step 2: Define sampling function to pick one variable name based on probabilities
+# Sampling function unchanged
 sample_variable_name <- function(probabilities, variable_names) {
-  # probabilities: numeric vector for one row
-  # variable_names: character vector of column names
   sampled_name <- sample(
     x = variable_names,
     size = 1,
@@ -65,74 +61,117 @@ sample_variable_name <- function(probabilities, variable_names) {
   return(as.character(sampled_name))
 }
 
-# Step 3: Join participant data with model predictions by condition ('pg_tt'),
-# then for each participant (row), sample one variable name according to probabilities for their condition
-sampled_predictions <- datfortest %>%
-  left_join(model_predictions_wide, by = "trial_id") %>%
-  rowwise() %>%
-  mutate(
-    # Select only the probability columns for sampling
-    sampled_variable = sample_variable_name(
-      probabilities = c_across(all_of(variable_names)),
-      variable_names = variable_names
-    )
-  ) %>%
-  ungroup() %>%
-  select(subject_id, trial_id, sampled_variable)  # CHANGE THIS????
+# Join on all the probabilities for all node values: not needed but good to see what is going on 
+joined_df <- datfortest %>%
+  left_join(model_predictions_wide, by = "trial_id")
 
-# Step 4: (optional) Inspect distribution of sampled variables by condition
-prediction_distribution <- sampled_predictions %>%
-  group_by(trial_id, sampled_variable) %>%
-  summarize(count = n(), .groups = "drop")
+# Prepare a vector to store sampled variable names
+sampled_variable <- vector("character", nrow(joined_df))
 
-print(prediction_distribution)
+# Loop over each participant trial 
+for (i in seq_len(nrow(joined_df))) {
+  # Extract the probabilities for this row (participant)
+  probs <- as.numeric(joined_df[i, variable_names])
 
-#sampled_predictions <- sampled_predictions[!duplicated(sampled_predictions[, c("subject_id", "trial_id", "sampled_variable")]), ]
+  # Sample one variable name for this participant, using its probabilities
+  sampled_variable[i] <- sample_variable_name(probs, variable_names)
+}
 
+# Assign sampled variables as a new column
+joined_df$sampled_variable <- sampled_variable
+
+# Select the relevant columns to return
+sampled_predictions <- joined_df %>%
+  arrange(subject_id, trial_id) %>% 
+  group_by(subject_id) %>% 
+  mutate(row_num = row_number()) %>%
+  ungroup() %>% 
+  select(subject_id, trial_id, row_num, node3, sampled_variable)
 
 ```
 
-Now merge back in to real participant data. This is for binomial logistic regression so needs certain vars like UNOBSERVED to be 1/0. Not sure what else we will use this for?
+
+Now merge back in to real participant data. This is for binomial logistic regression so needs certain vars like UNOBSERVED to be 1/0. 
 
 ```{r}
-modAndDat <- merge(df2, sampled_predictions, by = c("subject_id", "trial_id"), all.x = T)
+modAndDat <- merge(datfortest, sampled_predictions,
+                   by = c("subject_id", "trial_id", "row_num", "node3"), all.x = TRUE) %>% 
+  select(-row_num)
 
-modAndDat <- modAndDat[!duplicated(modAndDat[, c("subject_id", "trial_id", "sampled_variable")]), ] # For some reason 2556 not 2580?! Moving on for now...
+# Pivot longer - 5160
+fortest <- pivot_longer(modAndDat, cols = -c(subject_id, trial_id),
+                        names_to = "Respondent",
+                                       values_to = "Response")
 
-# Assign variables
-modAndDat <- modAndDat %>% mutate(Observed = factor(!node3%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(T,F)))
+fortest <- fortest %>% mutate(Observed = factor(!Response%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(TRUE, FALSE)))
 
-# No actually we need it long
-modAndDat2 <- merge(datfortest, sampled_predictions) %>% rename(participants = node3, model = sampled_variable)
+fortest$subject_id <- as.factor(fortest$subject_id)
+fortest$trial_id <- as.factor(fortest$trial_id)
+fortest$Respondent <- as.factor(fortest$Respondent)
+fortest$Response <- as.factor(fortest$Response)
 
-# Pivot longer
-fortest <- pivot_longer(modAndDat2, cols = -c(subject_id, trial_id, include),
-                        names_to = "respondent",
-                                       values_to = "response")
-
-fortest <- fortest %>% mutate(Observed = factor(!response%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(TRUE, FALSE)))
 ```
 
 Now do the regression. It shows participants select OBSERVED less often than predicted by the model. This is reported in the section `Unobserved vs observed variables` section.
 
 ```{r}
-predU <- glmer(Observed ~ respondent + (1|subject_id) + (1|trial_id), data = fortest, family = binomial(link='logit'))
+predU <- glmer(Observed ~ Respondent + (1|subject_id) + (1|trial_id), data = fortest, family = binomial(link='logit'))
 
 summary(predU)
 
-coef <- fixef(predU) # -0.202
+coef <- fixef(predU) # -0.181
 
-est <- exp(coef) # 0.817 - exp converts logodds to odds. 
-prob <- plogis(coef) # 0.39 - plogis is exp/(1+exp) and converts logodds to probs
+est <- exp(coef) # 0.834 - exp converts logodds to odds. 
+prob <- plogis(coef) #  plogis is exp/(1+exp) and converts logodds to probs
 
-se_intercept <- sqrt(diag(vcov(predU))) #["(Intercept)"]
+se <- sqrt(diag(vcov(predU))) 
 
-lower_logodds <- coef-(1.96*se_intercept)
-upper_logodds <- coef+(1.96*se_intercept)
+lower_logodds <- coef-(1.96*se)
+upper_logodds <- coef+(1.96*se)
 
-lower_or <- exp(lower_logodds)
-upper_or <- exp(upper_logodds)
+lower_or <- exp(lower_logodds) # .744
+upper_or <- exp(upper_logodds) # .936
 ```
+
+That df is a bit smaller than we need for plotting, so make a similar merge of the full df
+
+```{r}
+# modAndDat2 <- merge(df2, sampled_predictions, by = c("subject_id", "trial_id", "node3"))
+# 
+# # Assign variables
+# modAndDat <- modAndDat %>% mutate(Observed = factor(!node3%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(T,F)))
+# 
+# # No actually we need it long
+# modAndDat2 <- merge(datfortest, sampled_predictions) %>% rename(participants = node3, model = sampled_variable)
+
+# Remove duplicates here too, does it change the answer? Yes, signif goes from *** to **
+#modAndDat2 <- modAndDat2[!duplicated(modAndDat2[, c("subject_id", "trial_id", "model")]), ] 
+
+
+```
+
 
 TODO: what to do with this from now on. Should we also use it for the Actual/non-Actual analysis? It is more sophisticated.
 TO DO: redo the plot for the unobserved section, using this sampled prediction data.
+To decide: which is better for plotting: modandDat, or the longer fortest, which is equivalent except it is listed in long form, and has unnecessary col vars removed.
+
+New idea: this can be intermediate script to put it in format for plotting? But it's different when it's by-participant vs aggregate. Maybe need a new plotting script for just by_ppt stuff.
+
+But it's a problem when it doesn't keep all the nice new tags and labels of the bynode, bytrial version of the 288 obs df. Can merge that back in? Still no closer to plotting
+
+```{r}
+
+#df <- df %>% rename(response = node3)
+
+merged <- fortest %>% 
+  left_join(df %>% 
+              select(trial_id, Response, pgroup, Actual, include, structure, trial_type, trial_structure_type, Variable, SE), 
+            by = c("trial_id", "Response"))
+
+```
+
+Think this is now good for plotting?!!
+
+```{r}
+write.csv(merged, '../model_data/forplotbyppt.csv')
+```

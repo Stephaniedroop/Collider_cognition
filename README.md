@@ -40,7 +40,10 @@ The masterscript sources scripts in the following order:
 3. Other modelling
 
 - `modelCombLesions.Rmd` calculates the _inference_, _computational kindness_ and _actual causality_ parts of the full models, then progressively lesions these modules and combines with participant data. Input `tidied_predpn.csv` and `Data.Rdata`, output `modelAndDataUnfitpn.csv`.
-- `optimise_withKandEps.Rmd` fits and optimises models. Input `modelAndDataUnfitpn.csv`, output `fitforplot16mpn.csv`.
+- `optimise_withKandEps.Rmd` fits and optimises models. Input `modelAndDataUnfitpn.csv`, output `fit16mpn.csv`.
+- `processForPlot.Rmd` - an intermediate file for the clumsy relabelling, to stop the actual plotting file getting unwieldy. Input: `fit16mpn.csv`; output `fitforplot16mpn.csv`
+- `sample_predictions.Rmd` - get an actual sample from model for each participant trial. Input: `Data.Rdata` and `fitforplot16mpn.csv`, output: a glmer result in the console and reported in the Unobserved variables section of the paper and `forplotbyppt.csv`. (TO DO: should this not be used for the freestanding analyses scripts too)
+
 - `reportingFigs16.Rmd` generates plots. Input `fitforplot16mpn`, output many figures saved in folder `figs`. See script for naming conventions. Suggestion for use: open .Rmd file and knit to html to see all the plots first OR see already-output plots in `figs` folder. _TO DO_: 1) add code to save plots as .png too. 2) replace reporting plots from naive probability dustribution model predictions with the more sophisticated generated explanations from `sample_predictions.Rmd` (see below).
 - `by_ppt_fitting.Rmd` calculates likelihood for each participant, of the models fit to aggregate data. Input `Data.Rdata` and `fitforplot16mpn`. Output: table of results in the console
 
@@ -48,7 +51,6 @@ The masterscript sources scripts in the following order:
 
 - `abnormalInflation.Rmd` - check for presence of abnormal inflation and deflation (documented behavioural phenomena of causal selection) are found in our data, which would be support for causal selection theory. [Preliminary analysis finds no evidence, unlike in the cogsci paper]. Input `Data.Rdata`, output: table of results in the console.
 - `itemLevelChisq.Rmd` - check whether participants answer non-uniformly in each world. Also contains simple high level checks of whether they reliably answer Actual causes vs Non-Actual, and Observed v UNobserved variables. Input `modelAndDataUnfitpn.csv`, output: table of results in the console.
-- `sample_predictions.Rmd` - get an actual sample from model for each participant trial. Input: `Data.Rdata` and `tidied_predpn.csv`, output: a glmer result in the console and reported in the Unobserved variables section of the paper. TO DO: reuse this sampled explanations for the plots and the Actual/non Actual and abnormal inflation analyses.
 
 (There is also `Main_scripts_oldexp` which has the legacy previous experiment, where unobserved events were not truly unobserved, and their probabilities were conditional on the main event happening. The new experiment improved these points on reviewer suggestion, to make all events independent, and make the observed v unobserved events more obvious in the cover story vignettes).
 

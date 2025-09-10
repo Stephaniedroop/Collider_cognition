@@ -296,6 +296,10 @@ modelAndData <- modelAndData %>%
 
 ```
 
+There is more that can be done here to bring in all the vars that later get added in optimise script.
+
+
+
 
 ```{r}
 write.csv(modelAndData, '../model_data/modelAndDataUnfitpn.csv')  

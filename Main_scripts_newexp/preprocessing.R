@@ -1,31 +1,18 @@
----
-title: "preprocessing"
-output: html_document
-date: "2025-06-18"
----
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE--------------------------------------------------------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-```{r}
+
+## --------------------------------------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(rjson)
 rm(list=ls())
-```
 
 
-This is a script to get the collider rerun data and preprocess it. It was run 17 June 2025 with 240 participants on prolific.
-There was no pilot, as the experiment kept the same structure as the previous one (see collider_cogsci25). This is just a small modification.
-Most of this script is reused chunks from the first collider experiments's `mainbatch_preprocessing.R` script
-
-Wd is reset here to the location of the data, for the nifty chunk to collate the csvs. At the end of this doc it is reset to the location of the scripts.
-
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 setwd("../Data/new") # as in, setwd("/Users/stephaniedroop/Documents/GitHub/Collider_cognition/Data/newexp")
-```
 
-```{r}
+
+## --------------------------------------------------------------------------------------------------------------------------------
 files <- list.files("./")
 csvList <- lapply(files, read.csv, stringsAsFactors = FALSE)
 
@@ -45,9 +32,9 @@ csvList <- lapply(csvList, function(df) {
 df1 <- do.call(rbind, csvList) # 5184 obs
 dfq <- df1 %>% group_by(prolific_id) %>% summarise(n=n()) %>% filter(n==24) # 216 
 df1 <- df1 %>% filter(prolific_id %in% dfq$prolific_id) # 5184
-```
 
-```{r}
+
+## --------------------------------------------------------------------------------------------------------------------------------
 # Each trial's info is spread across multiple rows, so we need to get everything in one row
 # But first we need to replace spaces with NA
 df1 <- df1 %>% mutate(across(c('answer'), ~na_if(.,"")))
@@ -56,10 +43,9 @@ df1 <- df1 %>% fill(answer, .direction = 'up')
 # Remove empty cols and rows
 df1 <- df1 %>% filter(cb!='NA') # 2863
 
-```
 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 # Get the list of who got paid according to prolific
 demognew <- read.csv("../demognew.csv") %>% filter(Status=='APPROVED') # 240
 
@@ -71,11 +57,9 @@ keep2 <- reconc1 %>% filter(Participant.id %in% keep$prolific_id)
 
 df <- df1 %>% filter(prolific_id %in% keep$prolific_id) # 2580 = 215 ppts x 12 trials
 
-```
 
-Reporting demographics of the 215 participants
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 dem <- keep2
 dem$Age <- as.numeric(dem$Age)
 print(mean(dem$Age)) # 38.5
@@ -87,29 +71,24 @@ sum(dem$Sex=='Male') # 103 so other == 1
 mean(dem$Time.taken)/60 # 31.5
 sd(dem$Time.taken)/60 # 13.9
 
-```
 
-On with the analysis! 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 # Put a column with structure - for some reason it doesn't have
 df <- df %>% mutate(structure = if_else(grepl("^c", trialtype), 'conjunctive', 'disjunctive'))
 df <- df %>% select(-c(2:4,6,7,18,19))
-```
 
-A chunk to check that each ppt did each condition once 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 check <- df %>%
   group_by(subject_id, trialtype) %>%
   filter(n() > 1) %>%
   distinct(subject_id, trialtype)
 
 # It says 0, so that's nice
-```
 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 
 # --------------- Processing the answers participants gave -----------------
 
@@ -142,41 +121,16 @@ groupanswers <- c('The first student attended',
   'The second student had had a good morning',
   'The second student had not had a good morning')
 
-```
 
-```{r}
+
+## --------------------------------------------------------------------------------------------------------------------------------
 # Now make a new column with the position in array of their answer
 df <- df %>% mutate(ans = if_else(scenario=='job', match(df$answer, jobanswers), 
                                     if_else(scenario=='cook', match(df$answer, cookanswers),
                                             match(df$answer, groupanswers))))
-```
 
-# Reversing the counterbalancing
 
-var probs = [
-  [
-    ['10%', '50%', '80%', '50%'],
-    ['50%', '10%', '50%', '80%'],
-    ['10%', '70%', '80%', '50%'],
-  ],
-  [
-    ['80%', '50%', '10%', '50%'],
-    ['50%', '80%', '50%', '10%'],
-    ['80%', '50%', '10%', '70%'],
-  ],
-];
-
-Basically, if cb==0, they got the first set, and that's all fine... But if cb==1 then 1&2 need to swap with 3&4.
-
-However it is more complicated than that, for some conditions that are not quite symmetrical. They need a bit extra help to shifty.
-The problem is that if a person already did a trialtype in data0, then they get switched to it in data1, then their data will have two ostensibly of the same trial. This is still necessary and probably not a problem.
-
-The trialtypes are: equivalent: 
-c2 and c3 (010 and 100)
-d2 and d4 (010 and 100)
-d3 and d5 (011 and 101)
-
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 data0 <- df %>% filter(cb==0)
 data1 <- df %>% filter(cb==1)
 
@@ -212,10 +166,9 @@ data1 <- data1 %>% select(-c(trialtype,ans)) %>% rename(trialtype = cbtt, ans = 
 data1 <- data1 %>% select(-intans)
 
 df2 <- rbind(data0,data1) # 2640 of 9
-```
 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 # Map the answers they gave to the variables, in three increasing levels of granularity
 
 # 1. Just the 4 variables, irrespective of the value they took
@@ -240,10 +193,9 @@ df2 <- df2 %>% mutate(node3 = if_else(ans==1, 'A=1',
 
 
 
-```
 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 # We now give a variable for probgroup
 df2 <- df2 %>%
   mutate(pgroup = if_else(prob0=='10%' & prob1=='50%' | prob2=='10%' & prob3=='50%', '1', 
@@ -256,21 +208,12 @@ df2 <- df2 %>%
 df2 <- df2 %>%
   mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
 
-```
-
-We should rearrange to put all the rows together or it might cause problems later...
-
-```{r}
-df2 <- df2 %>% 
-  arrange(subject_id)
-```
 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------------------------------
 save(df2, file="../Data.Rdata")
 write.csv(df2, "../ppts.csv") 
 
 # Then set wd back to how you found it
 setwd("~/Documents/GitHub/Collider_cognition/Main_scripts_newexp")
-```
 

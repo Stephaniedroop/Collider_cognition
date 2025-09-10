@@ -13,6 +13,7 @@ library(tidyverse)
 ## Check item level correlation and other summary reporting statistics.
 
 ```{r, include=FALSE}
+rm(list=ls())
 df <- read.csv('../model_data/modelAndDataUnfitpn.csv') # 288 obs of 17
 
 ```

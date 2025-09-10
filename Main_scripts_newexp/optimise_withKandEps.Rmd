@@ -11,7 +11,8 @@ library(tidyverse)
 
 # Summary
 
-Takes data created in `modelCombLesions.Rmd`
+Takes data created in `modelCombLesions.Rmd`, ie. `modelAndDataunfitpn.csv`. Outputs `fit16mpn.csv`, which then goes for some preprocessing in `processForPLot.Rmd` 
+and that is then used by the next scripts in this series:  `reportingFigs16m.Rmd` and `samplePredictions.Rmd`.
 
 
 # STEP 1: READ IN 
@@ -24,7 +25,7 @@ So the code below roughly imports data of 8 models, then runs a set of likelihoo
 First some prelim setup and renaming:
 
 ```{r, include=FALSE}
-
+rm(list=ls())
 df <- read.csv('../model_data/modelAndDataUnfitpn.csv') # 288 obs of 21
 
 # Let's create variables coding the actual observation
@@ -395,6 +396,7 @@ fitforplot <- merge(df_wide, justppt, by = c('trial_id', 'node3'))
 fitforplot[, 22][is.na(fitforplot[, 22])] <- FALSE
 ```
 
+
 ```{r}
-write.csv(fitforplot, '../model_data/fitforplot16mpn.csv')  
+write.csv(fitforplot, '../model_data/fit16mpn.csv')  
 ```

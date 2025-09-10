@@ -24,6 +24,7 @@ Although our causal structures are complicated by the unobserved variables, we c
 
 
 ```{r, include=FALSE}
+rm(list=ls())
 # Get participant data
 load('../Data/Data.Rdata', verbose = T) # This is one big df2, 2580 of 14
 
