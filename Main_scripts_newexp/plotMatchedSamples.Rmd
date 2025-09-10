@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 rm(list=ls())
-df <- read.csv('../model_data/forplotbyppt.csv') # 5104 of 14 cos its long
+df <- read.csv('../model_data/forplotbyppt.csv') # 5160 of 14 cos its long
 
 df$trial_id <- as.factor(df$trial_id)
 df$Respondent <- as.factor(df$Respondent)
