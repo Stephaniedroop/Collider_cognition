@@ -17,26 +17,25 @@ rm(list=ls())
 # (JavaScript for the experiment itself is in the folder Experiment. 
 # For each participant a csv was saved on the server and then transferred out of there into Data)
 # Demographics are in the `preprocessing` # file , quiet=TRUE
-source(knitr::purl('preprocessing.Rmd')) # Collates individual csvs, reconciles with prolific report, saves `Data.Rdata` and also `ppts.csv`
-source(knitr::purl('cover_story_test.Rmd', quiet=TRUE)) # Freestanding analysis to check if cover story affects answers (it doesn't - except in 2/36 conditions, which can be ascribed to noise)
+source('01preprocess.R') #source(knitr::purl('preprocessing.Rmd')) # Collates individual csvs, reconciles with prolific report, saves `Data.Rdata` and also `ppts.csv`
+source('02coverTest') #source(knitr::purl('cover_story_test.Rmd', quiet=TRUE)) # Freestanding analysis to check if cover story affects answers (it doesn't - except in 2/36 conditions, which can be ascribed to noise)
 
 #------- 1. Create parameters, run cesm, get model predictions and save them ------------
-source('set_params.R')
-source('get_model_preds4.R') # 
+source('03setParams.R')
+source('04getPreds.R') # 
 # Takes the probability vectors of settings of the variables from `set_params.R`. 
 # Also loads source file `functionsN2.R` for 2 static functions which 1) generate world settings then CESM predictions
 
 # Process model predictions to be more user friendly: take average of 10 model runs, wrangles and renames variables, splits out node values 0 and 1
-source('modpred_processing2.R')  #  
+source('05processPreds.R')  #  
 
 
 # -------------3. Results: fit model, compare predictions, plot etc
 
-source(knitr::purl('modelCombLesions.Rmd')) # puts the processed model predictions together with lesions to get a df called 'modelAndDataUnfit.csv'
+source('06getLesions.R') #source(knitr::purl('modelCombLesions.Rmd')) # puts the processed model predictions together with lesions to get a df called 'modelAndDataUnfit.csv'
 # That is then sent to a few different scripts, following structure of paper:
-
-source(knitr::purl('optimise_withKandEps.Rmd'))
-source(knitr::purl('processForPlot.Rmd'))
+source('07optimise.R') # source(knitr::purl('optimise_withKandEps.Rmd'))
+source('08processForPlot.R') #source(knitr::purl('processForPlot.Rmd'))
 source(knitr::purl('samplePredictions.Rmd')) # Sample explanations from model
 source(knitr::purl('reportingFigs16.Rmd')) # Reporting plots on proportion model prediction, ie not the sampled explanations
 source(knitr::purl('plotMatchedSamples.Rmd')) # In process - so far gives the same layout as the simpler proportional ones
