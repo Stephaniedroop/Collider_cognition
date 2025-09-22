@@ -28,8 +28,11 @@ a) Processing behavioural experiment data (see folder `Other/hostExperiment` for
 
 - `01preprocess.R` - Get the participants' behavioural experiment data ready. Saves as `Data.Rdata` in folder `Data`
 - `02coverTest.R` - Freestanding analysis to check if cover story affects answers (it doesn't - except lightly in 2/36 conditions, which can be ascribed to noise)
+- `03demogs.R` - demographics on participant behavioural data
 
 2. Set up Collider worlds (see note on worlds below) and get CESM (Quillien+Lucas23) model predictions for those for the _causal selection_ part of the model:
+
+_Btw in the middle of a reconstruction of files and names at 21 Sept 2025_
 
 - `03setParams.R` -
 - `04getPreds.R` - get CESM model predictions. This in turn calls smaller scripts:
