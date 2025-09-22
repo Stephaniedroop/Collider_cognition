@@ -7,19 +7,24 @@ date: "2024-10-10"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
-library(stringr)
-# Script takes the processed data from the collider ppt expt (`DATA.RDATA`)
-# (which was cleaned and sliced in `mainbatch_preprocessing.R`) 
-# and combines it with the preprocessed model predictions from `modpred_process2.R` (`tidied_preds4.csv`)
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, tidy = TRUE)
+#library(tidyverse)
+#library(stringr)
+# Script takes the processed data from the collider ppt expt (`DATA.RDATA`) 
+# (which was cleaned in `preprocessing.R`) 
+# and combines it with the pre-processed model predictions from `modpred_process2.R` (`tidied_preds4.csv`)
 ```
 
-
+```{r}
+#setwd("../../Main_scripts_newexp") # do this if you changed it for the Data processing
+```
 
 ```{r, include=FALSE}
-load('../Data/Data.Rdata', verbose = T) # This is one big df, 'data', 3408 obs of 18 ie. 284 ppts
-mp <- read.csv('../model_data/tidied_preds4.csv') # 576 of 26 - 576 rows because: 3 pgroups x 12 trialtypes x 4 nodes x 4 prior possible settings of unobserved variables  
+load('../Data/Data.Rdata', verbose = T) # This is one big df, 'data', 2580, of 215 ppts
+data <- df2
+mp <- read.csv('../model_data/tidied_predpn.csv') # 576 of 26 - 576 rows because: 3 pgroups x 12 trialtypes x 4 nodes x 4 prior possible settings of unobserved variables  
+
+#mp$cesm <- mp$cesm*2 # a test for why the QL version is different
 
 mp$pgroup <- as.factor(mp$pgroup)
 mp$node3 <- as.factor(mp$node3)
@@ -252,17 +257,6 @@ Now bring in participant data:
 data$pgroup <- as.factor(data$pgroup)
 data$node3 <- as.factor(data$node3)
 data$trialtype <- as.factor(data$trialtype)
-data$isPerm <- as.factor(data$isPerm)
-
-# Some confusion over whether we want realLat or isPerm - and how to feed those things to the chart later
-# We want both. realLat applies to both model and data, so is tagged here to model.
-# isPerm is a data value so is tagged here to data. The combnorm takes them both to variable settings
-
-# Bring in the isPerm status of all the node answers actually given
-# dataPlaceholder <- data %>% # 214
-#   na.omit() %>%
-#   group_by(pgroup, trialtype, node3, isPerm) %>% # prob no need for .drop because the isPerm val is the same for both values of the var
-#   tally
 
 dataNorm <- data %>% # 289
   group_by(pgroup, trialtype, node3, .drop=FALSE) %>% # Here we do need the .drop to get all the combinations
@@ -295,10 +289,19 @@ modelAndData <- modelAndData %>%
   unite('pg_tt', pgroup, trialtype, sep = "_", remove = FALSE)
 
 #modelAndData <- modelAndData[, c(1:4, 7:12, 5, 13:16)]
+
+modelAndData <- modelAndData %>%
+  group_by(pg_tt) %>%
+  mutate(baseline = 1 / n())
+
 ```
+
+There is more that can be done here to bring in all the vars that later get added in optimise script.
+
+
 
 
 ```{r}
-write.csv(modelAndData, '../model_data/modelAndDataUnfit2.csv')  
+write.csv(modelAndData, '../model_data/modelAndDataUnfitpn.csv')  
 ```
 

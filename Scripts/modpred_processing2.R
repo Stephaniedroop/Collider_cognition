@@ -78,6 +78,22 @@ all <- all %>% unite("uAuB", Au,Bu, sep= "", remove = FALSE)
 # d7: 111
 
 
+# ---------- Deduction and inference
+
+# Sometimes the values of the unobserved variables can be inferred logically. >>> deduction.
+# Sometimes we don't know what values the unobserved variables take >>> inference
+
+# All unobserved are realLatent for inference, except the following which can be deduced:
+
+# c5: Au and Bu >> must both be 1
+# d2: Bu >> 0
+# d3: Bu >> 1
+# d4: Au >> 0
+# d5: Au >> 1
+# d6: Au and Bu >> both 0
+
+
+
 
 # write this as csv in case need it later - 576 rows because: 3 pgroups x 12 trialtypes x 4 nodes x 4 prior possible settings of unobserved variables  
 write.csv(all, '../model_data/tidied_predpn.csv')
