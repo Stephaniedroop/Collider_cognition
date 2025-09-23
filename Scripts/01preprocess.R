@@ -12,6 +12,14 @@ rm(list=ls())
 setwd("../Data/new") # as in, setwd("/Users/stephaniedroop/Documents/GitHub/Collider_cognition/Data/newexp")
 
 
+# Get individual csvs into a list
+csvList <- lapply(list.files(here("Data", "batch"), full.names = TRUE), 
+                  read.csv, stringsAsFactors = F)
+
+
+
+
+
 ## --------------------------------------------------------------------------------------------------------------------------------
 files <- list.files("./")
 csvList <- lapply(files, read.csv, stringsAsFactors = FALSE)

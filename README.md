@@ -9,11 +9,12 @@
 
 ## Languages
 
-All scripts are in R, v.4.1. Packages needed: tidyverse, lme4, lmerTest, stringr, [[purrr, ggnewscale, RColorBrewer]] // TO DO check if definitely use these last ones
+All scripts are in R, v.4.1. Packages needed: tidyverse, lme4, lmerTest, stringr, ggnewscale, RColorBrewer
 
 ## How to run
 
 - For **analysis** go to the `Scripts` folder and run `master.R`, or if you know what script you are looking for you can go straight there and run that only. See list of scripts below.
+  (Think I don't need an .Rproj file? But maybe best to have it for packages etc)
 - To see and try the behavioural experiment go to https://eco.ppls.ed.ac.uk/~s0342840/collidern/collidertop.html. Code for the task interface and structure of running it in JavaScript in in the folder `Other/hostExperiment`. To click through the experiment: at the comprehension check enter Yes, No, True, 12.
 
 ## Files, folders, model
