@@ -2,42 +2,36 @@
 ########### Master script for collider for new experiment - June 2025 ##########
 #################################################################################
 
-# setwd() # wherever you saved the files eg Collider_cognition
-setwd("/Users/stephaniedroop/Documents/GitHub/Collider_cognition/Data")
-
 library(tidyverse)
-library(ggnewscale) # Download these if you don't have them
-rm(list=ls())
-
-# Please note, each script takes as output a csv or df produced in the previous one. 
-# These have not been saved separately in the repo.
-# If you need access to a later one only, you currently still need to run the previous scripts.
-
+library(rjson)
+library(ggnewscale) # Load these if you don't have them
+library(here)
+library(RColorBrewer)
 
 # ------------- 0. Source utils -------------
-source('cesmUtils.R') # Functions for running the cesm model
-source('optimUtils.R') # Functions for optimisation and likelihood calculation
+source(here('cesmUtils.R')) # Functions for running the cesm model
+source(here('optimUtils.R')) # Functions for optimisation and likelihood calculation
 
 #--------------- 1. Get ppt data from behavioural experiment  -------------------
 # (JavaScript for the experiment itself is in the folder Experiment. 
 # For each participant a csv was saved on the server and then transferred out of there into Data)
 # Demographics are in the `preprocessing` # file , quiet=TRUE
-source('01preprocess.R') #source(knitr::purl('preprocessing.Rmd')) # Collates individual csvs, reconciles with prolific report, saves `Data.Rdata` and also `ppts.csv`
-source('02coverTest') #source(knitr::purl('cover_story_test.Rmd', quiet=TRUE)) # Freestanding analysis to check if cover story affects answers (it doesn't - except in 2/36 conditions, which can be ascribed to noise)
+source(here('01preprocess.R')) #source(knitr::purl('preprocessing.Rmd')) # Collates individual csvs, reconciles with prolific report, saves `Data.Rdata` and also `ppts.csv`
+source(here('02coverTest')) #source(knitr::purl('cover_story_test.Rmd', quiet=TRUE)) # Freestanding analysis to check if cover story affects answers (it doesn't - except in 2/36 conditions, which can be ascribed to noise)
 
 #------- 1. Create parameters, run cesm, get model predictions and save them ------------
-source('03setParams.R') 
-source('04getPreds.R') # gets only cesm model predictions because those are the most complicated. All the other parts are compiled later in the lesions script
+source(here('03setParams.R')) 
+source(here('04getPreds.R')) # gets only cesm model predictions because those are the most complicated. All the other parts are compiled later in the lesions script
 # Takes the probability vectors of settings of the variables from `set_params.R`. 
 # Also loads source file `functionsN2.R` for 2 static functions which 1) generate world settings then CESM predictions
 
 # Process model predictions to be more user friendly: take average of 10 model runs, wrangles and renames variables, splits out node values 0 and 1
-source('05processPreds.R')  #  
+source(here('05processPreds.R'))  #  
 
 
 # -------------3. Results: fit model, compare predictions, plot etc
 
-source('06getLesions.R') #
+source(here('06getLesions.R')) #
 source(knitr::purl('modelCombLesions.Rmd')) # puts the processed model predictions together with lesions to get a df called 'modelAndDataUnfit.csv'
 # That is then sent to a few different scripts, following structure of paper:
 source('07optimise.R') 
