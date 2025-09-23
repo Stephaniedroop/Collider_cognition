@@ -4,23 +4,15 @@
 
 
 # Get individual csvs into a list
-csvList <- lapply(list.files(here("Data", "batch"), full.names = TRUE), 
+csvList <- lapply(list.files(here("Data", "new"), full.names = TRUE), 
                   read.csv, stringsAsFactors = F)
-
-
-
-
-
-## --------------------------------------------------------------------------------------------------------------------------------
-# files <- list.files("./")
-# csvList <- lapply(files, read.csv, stringsAsFactors = FALSE)
 
 # Reference column names from the first file
 colnames_ref <- colnames(csvList[[1]])
 
 # Identify files with mismatched column names
-bad_files <- files[sapply(csvList, function(df) !identical(colnames(df), colnames_ref))]
-print(bad_files) # There are two where the column headings did not copy but the answers are in right structure
+#bad_files <- files[sapply(csvList, function(df) !identical(colnames(df), colnames_ref))]
+#print(bad_files) # There are two where the column headings did not copy but the answers are in right structure
 
 csvList <- lapply(csvList, function(df) {
   colnames(df) <- colnames_ref
@@ -28,30 +20,36 @@ csvList <- lapply(csvList, function(df) {
 })
 
 # An initial data file. (It still needs to be filtered for complete ppts and reconciled with prolific account of who was paid, below)
-df1 <- do.call(rbind, csvList) # 5184 obs
+df1 <- do.call(rbind, csvList) 
 
 dfq <- df1 |> 
   group_by(prolific_id) |> 
   summarise(n=n()) |> 
   filter(n==24) # 216 
 
-df1 <- df1 |> filter(prolific_id %in% dfq$prolific_id) # 5184
+df1 <- df1 |> 
+  filter(prolific_id %in% dfq$prolific_id) 
 
 
 ## --------------------------------------------------------------------------------------------------------------------------------
 # Each trial's info is spread across multiple rows, so we need to get everything in one row
 # But first we need to replace spaces with NA
-df1 <- df1 |> mutate(across(c('answer'), ~na_if(.,"")))
+df1 <- df1 |> 
+  mutate(across(c('answer'), ~na_if(.,"")))
+
 # Then can fill upwards to get the text answer in the same place as the trial info
-df1 <- df1 |> fill(answer, .direction = 'up')
+df1 <- df1 |> 
+  fill(answer, .direction = 'up')
+
 # Remove empty cols and rows
-df1 <- df1 |> filter(cb!='NA') # 2863
+df1 <- df1 |> 
+  filter(cb!='NA') # 2592
 
 
 
 ## --------------------------------------------------------------------------------------------------------------------------------
 # Get the list of who got paid according to prolific
-demognew <- read.csv(here('Data', 'demognew.csv') |> 
+demognew <- read.csv(here('Data', 'demognew.csv')) |> 
                        filter(Status=='APPROVED') # 240
 
 reconc1 <- demognew |> 
@@ -137,7 +135,7 @@ groupanswers <- c('The first student attended',
 
 
 ## --------------------------------------------------------------------------------------------------------------------------------
-# Mke a new column with the position in array of their answer
+# Make a new column with the position in array of their answer
 df <- df |> 
   mutate(ans = if_else(scenario=='job', match(df$answer, jobanswers), 
                                     if_else(scenario=='cook', match(df$answer, cookanswers),
@@ -230,13 +228,49 @@ df2 <- df2 |>
 df2 <- df2 |> 
   unite('trial_id', pgroup, trialtype, sep = "_", remove = FALSE)
 
+# This var include is no longer necessary because the epsilon par allows all data to be modelled even with noise
+# But let's keep it anyway just for some checks
 df2 <- df2 |>
   mutate(include = !( (node3=='B=0' & B==1) | 
                         (node3=='B=1' & B==0) | 
                         (node3=='A=0' & A==1) | 
                         (node3=='A=1' & A==0)))
 
+# Add a column called Observed, which is TRUE if they selected an observed variable (A or B) and FALSE if unobserved (Au or Bu)
+df2 <- df2 |>
+  mutate(Observed = if_else(node %in% c('A','B'), TRUE, FALSE))
+
+# Copy the column Observed to one called Known
+# df2 <- df2 |> 
+#   mutate(Known = Observed)
+
+# Now change some values of Known from FALSE to TRUE, 
+# where the unobserved variable can be logically inferred from the situation
+# That means: 
+# -- in c5 both Au=1 and Bu=1 
+# -- in d2 Bu=0
+# -- in d3 Bu=1
+# -- in d4 Au=0
+# -- in d5 Au=1
+# -- in d6 both Au=0 and Bu=0
+
+# A new version of Known, like before except also has TRUE for any times node3 is A or B, plus the conditions before named, and otherwise false
+df2 <- df2 |> 
+  mutate(Known = case_when(
+    node3 %in% c('A=0','A=1','B=0','B=1') ~ TRUE,
+    trialtype=='c5' & node3 %in% c('Au=1','Bu=1') ~ TRUE,
+    trialtype=='d2' & node3=='Bu=0' ~ TRUE,
+    trialtype=='d3' & node3=='Bu=1' ~ TRUE,
+    trialtype=='d4' & node3=='Au=0' ~ TRUE,
+    trialtype=='d5' & node3=='Au=1' ~ TRUE,
+    trialtype=='d6' & node3 %in% c('Au=0','Bu=0') ~ TRUE,
+    TRUE ~ FALSE
+  ))
+
+# Now arrange df2 so all subjects are in order, and within each subject all trials are in order
+df2 <- df2 |>
+  arrange(subject_id, trial_id)
 
 
 ## --------------------------------------------------------------------------------------------------------------------------------
-save(data, file = here("Data", "Data.Rdata"))
+save(df2, file = here::here("Data", "Data.Rdata"))
