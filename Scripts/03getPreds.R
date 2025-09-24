@@ -1,28 +1,17 @@
 #################################################### 
 ###### Collider - get model predictions  #####
 ####################################################
-# Script to set up probability vectors of each variable, then run a series of 3 source files to implement the cesm
-# and save the model predictions for each run
+# Script to set up probability vectors of each variable, then run a series of fucntions from source file `cesmUtils`
+# to implement the cesm and save the model predictions for each run
 
-rm(list=ls())
-setwd("../Main_scripts")
-library(tidyverse)
 
-# NOW WITHOUT SENSITIVITY PARAMETER AND WITH S SET AT 0.7. See v2 for those.
-
-rm(list=ls())
 # Other values set outside for now 
 N_cf <- 100000L # How many counterfactual samples to draw
 modelruns <- 10
 s <- 0.7
-
 causes1 <- c('A', 'Au', 'B', 'Bu')
 
-load('../model_data/params.rdata', verbose = T) # defined in script `set_params.r`
-
-
-# Load functions: world_combos, get_cfs 
-source('functionsN2.R')
+load(here('Data', 'modelData', 'params.rdata')) # defined in script `set_params.r`
 
 set.seed(12)
 
@@ -35,9 +24,9 @@ all <- data.frame(matrix(ncol=27, nrow = 0)) # needs to be 10 longer than df
 # 1) generate worlds, 2) get CESM model predictions
 for (i in 1:length(poss_params)) { 
   # 1) Get possible world combos of two observed variables in both dis and conj structures
-  dfd <- world_combos3(params = poss_params[[i]], structure = 'disjunctive')
+  dfd <- world_combos(params = poss_params[[i]], structure = 'disjunctive')
   dfd$pgroup <- i
-  dfc <- world_combos3(params = poss_params[[i]], structure = 'conjunctive')
+  dfc <- world_combos(params = poss_params[[i]], structure = 'conjunctive')
   dfc$pgroup <- i
   # Empty df to put model predictions in
   mp1 <- data.frame(matrix(ncol = 27, nrow = 0)) # was 27
@@ -45,9 +34,9 @@ for (i in 1:length(poss_params)) {
       # We also want to calculate 10 versions to get the variance of model predictions 
   for (m in 1:modelruns) { 
     # If you want to test the Quillien and Lucas 2023 'General version' of CESM, replace 'get_cfs' with 'get_cfs_ql'
-    mpd <- get_cfs_ql(params = poss_params[[i]], structure = 'disjunctive', df = dfd) 
+    mpd <- get_cfs(params = poss_params[[i]], structure = 'disjunctive', df = dfd) 
     mpd$run <- m
-    mpc <- get_cfs_ql(params = poss_params[[i]], structure = 'conjunctive', df = dfc)
+    mpc <- get_cfs(params = poss_params[[i]], structure = 'conjunctive', df = dfc)
     mpc$run <- m
     mp1 <- rbind(mp1, mpd, mpc)
   }
@@ -56,6 +45,4 @@ for (i in 1:length(poss_params)) {
 } 
 # It takes a minute or two but not terrible.
 
-write.csv(all, "../model_data/allpn.csv") # 1440 of 27
-
-# 
+save(all, file = here('Data', 'modelData', 'all.rda')) # 1440 of 27

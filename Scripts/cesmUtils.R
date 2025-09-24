@@ -16,7 +16,7 @@
 # A function to get all world combinations
 
 # Gives varying obs: if c then 5 x 4, if d then 7 x 4 (reason is we need all combos of unobs, even incoherent, for lesion later)
-world_combos3 <- function(params, structure) { 
+world_combos <- function(params, structure) { 
   causes2 <- rownames(params)
   n_causes <- nrow(params)
   #causes <- rownames(params)
@@ -50,29 +50,29 @@ world_combos3 <- function(params, structure) {
   
   # This chunk gives all combinations of Au and Bu to all the real sets of ABE. 
   # (We need all combinations, even those with 0 posterior, because later a lesion samples by prior instead)
-  result <- df %>% group_by(A, B, E) %>%
-    group_split() %>%
+  result <- df |> 
+    group_by(A, B, E) |>
+    group_split() |>
     lapply(function(group) {
       combinations <- expand.grid(Au = c(0,1), Bu=c(0,1))
-      cbind(group[1, c("A", "B", "E")], combinations)
-    }) %>%
+      cbind(group[1, c("A", "B", "E")], combinations)}) |>
     bind_rows()
   
   # Then we want to merge this back in to the df
   test <- merge(x = result, y = df, by = c('A','B','Au','Bu'))
   
   # Calculate posterior. Some are incoherent but will be removed later
-  df1 <- test %>% 
-    group_by(A, B, E.y, E.x) %>% 
-    mutate(posterior = PrUn/sum(PrUn)) %>%  #groupPost = cur_group_id()
+  df1 <- test |> 
+    group_by(A, B, E.y, E.x) |> 
+    mutate(posterior = PrUn/sum(PrUn)) |>  #groupPost = cur_group_id()
     ungroup() 
   
   # Now set the impossible ones to 0
   df1$posterior[df1$E.x!=df1$E.y] <- 0 
 
-  df1 <- df1 %>% 
-    group_by(A, B, E.x) %>% 
-    mutate(groupPost = cur_group_id()) %>% 
+  df1 <- df1 |> 
+    group_by(A, B, E.x) |> 
+    mutate(groupPost = cur_group_id()) |> 
     ungroup() 
   
   df1
@@ -89,7 +89,7 @@ get_cfs <- function(params, structure, df) {
   n_causes <- nrow(params)
   p <- params[,2] # The p_eachvar==1 
   pvec <- rep(p, times = N_cf) # Turn it into a 40k vec
-  mp <- df %>% relocate(Au, .before = B) # assuming we can do it in one line - reassignment takes a lot of time
+  mp <- df |> relocate(Au, .before = B) # assuming we can do it in one line - reassignment takes a lot of time
   # Add new columns then fill them
   new_cols <- c('mA', 'mAu', 'mB', 'mBu', 'cfsA', 'cfaAu', 'cfsB', 'cfsBu', 'Sum')
   mp[new_cols] <- NA
@@ -126,13 +126,15 @@ get_cfs <- function(params, structure, df) {
     for (cause in 1:n_causes)
     {
       # ..And then populate! (the second part sets correlation negative when cause pushes against effect taking state it took)
-      cor_sizes[cause] <- cor(cfs[[causes1[cause]]], cfs$Match, method = 'pearson') * (c(-1,1)[as.numeric(case[[causes1[cause]]])+1])
+      cor_sizes[cause] <- cor(cfs[[causes1[cause]]], 
+                              cfs$Match, method = 'pearson') * 
+        (c(-1,1)[as.numeric(case[[causes1[cause]]])+1])
       realcfs[cause] <- sum(cfs[[causes1[cause]]]!=case[[causes1[cause]]])
     }
     # Now put these correlations in the mp df, along with the number of actual cfs simulated, and how many times the Effect matched 
     mp[c_ix, 18:21] <- t(cor_sizes)
     mp[c_ix, 22:25] <- t(realcfs)
-    mp[c_ix, 26] <- sum(cfs$E==case$E.x)
+    mp[c_ix, 26] <- sum(cfs$E == case$E.x)
     mp$index <- 1:nrow(mp)
   }
   mp
@@ -149,77 +151,6 @@ get_cfs <- function(params, structure, df) {
 # multiplied by standardising factor
 # d) Take average across all pairs of worlds
 
-# --------- simple prior ---------- (prolly just delete, we won't use it)
-
-get_cfs_simpleprior <- function(params, structure, df) { 
-  n_causes <- nrow(params)
-  p <- params[,2] # The p_eachvar==1 
-  
-  # STEP a) Simulate worlds from the causal model - this is just from the prior rates
-  # Get a column of N_cf samples for each value of p
-  mat <- sapply(p, function(prob) rbinom(N_cf, size = 1, prob = prob))
-  # But need to do a different way to 'anchor on the real world'
-
-  # Set E as per structural equations
-  conj_E <- as.numeric((mat[,1] & mat[,2]) & (mat[,3] & mat[,4]))
-  disj_E <- as.numeric((mat[,1] & mat[,2]) | (mat[,3] & mat[,4]))
-  
-  # Get the standard deviations 
-  sds <- apply(mat, 2, sd)
-  sdcE <- sd(conj_E)
-  sddE <- sd(disj_E)
-  
-  # get the standardising factors (needed in step c)
-  sd_d <- sds/sddE
-  sd_c <- sds/sdcE
-  
-  # STEP b) Simulate counterfactual twin worlds all at once: the same size vector this time all 0.5
-  twins <- matrix(rbinom(N_cf * n_causes, size = 1, prob = 0.5), nrow = N_cf, ncol = n_causes)
-  
-  # Compute separate vector of endogenous Effects for each twin C, keeping other Vs same
-  # (First for conjunctive SEMs)
-  nC1cE <- as.numeric((twins[,1] & mat[,2]) & (mat[,3] & mat[,4]))
-  nC2cE <- as.numeric((mat[,1] & twins[,2]) & (mat[,3] & mat[,4]))
-  nC3cE <- as.numeric((mat[,1] & mat[,2]) & (twins[,3] & mat[,4]))
-  nC4cE <- as.numeric((mat[,1] & mat[,2]) & (mat[,3] & twins[,4]))
-  # Then wrap into a matrix
-  matcE <- cbind(nC1cE, nC2cE, nC3cE, nC4cE)
-  
-  # (Then do the same for the disjunctive SEMs)
-  nC1dE <- as.numeric((twins[,1] & mat[,2]) | (mat[,3] & mat[,4]))
-  nC2dE <- as.numeric((mat[,1] & twins[,2]) | (mat[,3] & mat[,4]))
-  nC3dE <- as.numeric((mat[,1] & mat[,2]) | (twins[,3] & mat[,4]))
-  nC4dE <- as.numeric((mat[,1] & mat[,2]) | (mat[,3] & twins[,4]))
-  # Then wrap into a matrix
-  matdE <- cbind(nC1dE, nC2dE, nC3dE, nC4dE)
-  
-  # STEP c) Compute specific causal effect for each pair of worlds
-  
-  # First the change in E:
-  # Conjunctive:
-  deltaEc <- matcE-conj_E
-  # Disjucntive:
-  deltaEd <- matdE-conj_E
-  # Then changes in C: they are all the same simulated from prior so can use the same ones
-  deltaC <- twins-mat
-  
-  # Ratio of change
-  ratio_c <- deltaEc/deltaC # Five possible values: NaN, -Inf, 0, -1, Inf, 1
-  ratio_d <- deltaEd/deltaC
-  
-  # Replace the /0 ones with NA
-  ratio_c[is.infinite(ratio_c)] <- NA
-  ratio_d[is.infinite(ratio_d)] <- NA
-  
-  # Multiply the ratios by the standardising factors to get Specific Causal Effect
-  sce_c <- sweep(ratio_c, 2, sd_c, '*')
-  sce_d <- sweep(ratio_c, 2, sd_d, '*')
-  
-  # STEP d) Compute causal score by averaging across worlds
-  kc <- colSums(sce_c, na.rm = TRUE) / N_cf # Conjunctive
-  kd <- colSums(sce_d, na.rm = TRUE) / N_cf 
-  
-}
 
 # ---------- Anchors on the actual world ---------------
 
@@ -230,7 +161,8 @@ get_cfs_ql <- function(params, structure, df) { #
   p <- params[,2] # The p_eachvar==1 
   pvec <- rep(p, times = N_cf) # Turn it into a 40k vec 
   worlds <- nrow(df) 
-  mp <- df %>% relocate(Au, .before = B) # assuming we can do it in one line - reassignment takes a lot of time
+  mp <- df |> 
+    relocate(Au, .before = B) # assuming we can do it in one line - reassignment takes a lot of time
   # Add new columns then fill them
   new_cols <- c('mA', 'mAu', 'mB', 'mBu', 'cfsA', 'cfaAu', 'cfsB', 'cfsBu', 'Sum')
   mp[new_cols] <- NA

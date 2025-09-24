@@ -2,11 +2,7 @@
 ###### Collider new exp June 2025 demographics #########
 ########################################################
 
-
-library(tidyverse)
-setwd("~/Documents/GitHub/Collider_cognition/Data")
-
-dem <- read.csv('demognew.csv')
+dem <- read.csv(here('Data', 'demognew.csv'))
 
 dem <- dem %>% filter(Status=='APPROVED') # 240
 

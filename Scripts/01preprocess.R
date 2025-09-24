@@ -271,6 +271,16 @@ df2 <- df2 |>
 df2 <- df2 |>
   arrange(subject_id, trial_id)
 
+# Make everything a factor for later
+
+df2 <- df2 |> 
+  mutate(across(where(is.logical), as.factor))
+
+df2 <- df2 |> 
+  mutate(across(where(is.character), as.factor))
+
+
+data <- df2
 
 ## --------------------------------------------------------------------------------------------------------------------------------
-save(df2, file = here::here("Data", "Data.Rdata"))
+save(data, file = here::here("Data", "Data.Rdata"))

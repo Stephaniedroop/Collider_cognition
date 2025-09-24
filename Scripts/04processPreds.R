@@ -3,15 +3,21 @@
 #######################################################
 
 
-# The functions from 'functions2' generated model predictions for CESM only. 
-# To make the full model and all the lesioned version, run this preprocessing step and then combine in 'modelCombLesions'
+# The functions from 'cesmfunctions' generated model predictions for CESM only. 
+# To make the full model and all the lesioned version, run this preprocessing step and then combine in '06getLesions'
 
-library(tidyverse)
-
-rm(list=ls())
-all <- read.csv('../model_data/allpn.csv') # 1440
+load(here('Data', 'modelData', 'all.rda')) # 1440
 
 all$pgroup <- as.factor(all$pgroup)
+all$structure <- as.factor(all$structure)
+
+all$A <- as.factor(all$A)
+all$Au <- as.factor(all$Au)
+all$B <- as.factor(all$B)
+all$Bu <- as.factor(all$Bu)
+
+all$E.x <- as.factor(all$E.x)
+all$E.y <- as.factor(all$E.y)
 
 # Bring in trialtype and rename as the proper string name 
 all$trialtype <- all$groupPost
@@ -29,16 +35,21 @@ all$trialtype[all$trialtype==3 & all$structure=='conjunctive'] <- 'c3'
 all$trialtype[all$trialtype==4 & all$structure=='conjunctive'] <- 'c4'
 all$trialtype[all$trialtype==5 & all$structure=='conjunctive'] <- 'c5'
 
+all$trialtype <- as.factor(all$trialtype)
+
 # First we have to average the model runs - goes from 1920 to 192
-all <- all %>% group_by(pgroup, structure, index) %>% 
-  mutate(A_cesm = mean(mA), Au_cesm = mean(mAu), B_cesm = mean(mB), Bu_cesm = mean(mBu)) %>% 
+all <- all |> 
+  group_by(pgroup, structure, index) |> 
+  mutate(A_cesm = mean(mA), Au_cesm = mean(mAu), B_cesm = mean(mB), Bu_cesm = mean(mBu)) |> 
   distinct(pgroup, structure, index, .keep_all = TRUE)
 
 
 # Pivot longer and list node names with their CESM values
-all <- all %>% pivot_longer(cols = c(A_cesm:Bu_cesm), names_to = c('node', '.value'), names_sep = '_') 
+all <- all |> 
+  pivot_longer(cols = c(A_cesm:Bu_cesm), names_to = c('node', '.value'), names_sep = '_') 
 
-all <- all %>% select(-(mA:run))
+all <- all |> 
+  select(-(mA:run))
 
 # 768 is then 1920/10 = 192 x 4 variables
 
@@ -58,7 +69,14 @@ all$node3[all$B=='0' & all$node2=='B'] <- 'B=0'
 all$node3[all$B=='1' & all$node2=='B'] <- 'B=1'
 
 # Get a tag of the unobserved variables' settings. Then we can group data by this for plotting
-all <- all %>% unite("uAuB", Au,Bu, sep= "", remove = FALSE)
+all <- all |> 
+  unite("uAuB", Au,Bu, sep= "", remove = FALSE)
+
+all$node <- as.factor(all$node)
+all$node2 <- as.factor(all$node2)
+all$node3 <- as.factor(all$node3)
+all$uAuB <- as.factor(all$uAuB)
+
 
 # ------- 
 
@@ -91,9 +109,11 @@ all <- all %>% unite("uAuB", Au,Bu, sep= "", remove = FALSE)
 # d4: Au >> 0
 # d5: Au >> 1
 # d6: Au and Bu >> both 0
+# Actually this in the data processing script, so will be combined later
 
+# Finally rename to be consistent later
 
-
+mp <- all
 
 # write this as csv in case need it later - 576 rows because: 3 pgroups x 12 trialtypes x 4 nodes x 4 prior possible settings of unobserved variables  
-write.csv(all, '../model_data/tidied_predpn.csv')
+save(mp, file = here('Data', 'modelData', 'modelproc.rda'))

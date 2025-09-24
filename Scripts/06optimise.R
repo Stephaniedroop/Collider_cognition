@@ -1,38 +1,11 @@
 ##################################################################
 ######## Optimise params and NLL ################
+##################################################################
 
+load(here('Data', 'modelData', 'modelAndDataUnfit.rda')) # functions to run the model
 
-
-library(tidyverse)
-rm(list=ls())
-
-#df <- read.csv('../Data/modelData/modelAndDataUnfitpn.csv')
-df <- readRDS('../Data/modelData/modelAndDataUnfitpn.rda')
-
-# Let's create variables coding the actual observation
-df.map<-data.frame(condition=c('c1','c2','c3','c4','c5','d1','d2','d3','d4','d5','d6','d7'),
-                   A=c(0,0,1,1,1, 0,0,0,1,1,1,1),
-                   B=c(0,1,0,1,1, 0,1,1,0,0,1,1),
-                   E=c(0,0,0,0,1, 0,0,1,0,1,0,1))
-
-for (i in 1:nrow(df))
-{
-  df$A[i]<-df.map$A[df.map$condition==df$trialtype[i]]
-  df$B[i]<-df.map$B[df.map$condition==df$trialtype[i]]
-  df$E[i]<-df.map$E[df.map$condition==df$trialtype[i]]
-}
-
-
-df <- df |>
-  mutate(include = !( (node3=='B=0' & B==1) | (node3=='B=1' & B==0) | (node3=='A=0' & A==1) | (node3=='A=1' & A==0)))
-
-df <- df |> 
-  rename(trial_id = pg_tt)
-# Any result not 'real' or 'Actual' still needs some small prob value allocated by the softmax, so give -Inf here
-df[df$include == FALSE, 9:16] <- -Inf
-
-
-nons <- sum(df$n[df$include == FALSE]) #132 / 2580
+# ------------- An extra section for reporting noisy answers -------------
+nons <- sum(df$n[df$include == FALSE]) #132 / 2580.   389???!!
 
 ppl <- df |> 
   group_by(trial_id) |> 
@@ -41,15 +14,17 @@ ppl <- df |>
 sum(ppl$n) # 2580
 
 # For old experiment it is 50/3408 = .0147
-# For new experiment it is 132/2580 = .0511
+# For new experiment it is 132/2580 = .0511 now it is 15.1 %???!!
+
+
+# -------------- Run the functions ------------------
+
+# Currently in two versions, one for 3 pars and one for 2. Later will make the functions general for any number
 
 # Initial values for testing:
 pars <- c(1, 1, 1)
 mod_name <- 'full'
 i <- 1
-
-
-
 
 # Usage:
 model_names <- c('full', 
@@ -65,12 +40,12 @@ results1 <- optimize_models(model_names, df)
 
 print(results1)
 
+# -------------- The two par version --------------
+
 # Initial values for testing:
 pars <- c(1, 1)
 mod_name <- 'noKind'
 i <- 1
-
-
 
 # Usage:
 model_names2 <- c('noKind', 
@@ -116,7 +91,6 @@ fitforplot[, 22][is.na(fitforplot[, 22])] <- FALSE
 
 
 ## ---------------------------------------------------------------------------------------------------------------
-#write.csv(fitforplot, '../Data/modelData/fit16mpn.csv')  
 
-saveRDS(fitforplot, '../Data/modelData/fit16mpn.rda')
-
+#saveRDS(fitforplot, '../Data/modelData/fit16mpn.rda')
+save(fitforplot, file = here('Data', 'modelData', 'fit16mpn.rda'))

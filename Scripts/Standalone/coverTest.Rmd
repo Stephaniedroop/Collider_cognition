@@ -8,7 +8,7 @@ date: "2025-08-19"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
+#library(tidyverse)
 ```
 
 ## A check to see if cover story affected answering
@@ -26,9 +26,7 @@ accept the product if they see a working demonstration of [either/both] feature[
 The underlying laptop files for Feature B are sometimes corrupted: they only work [50%] of the time, whether the feature is presented or not.
 
 ```{r, include=FALSE}
-# set working directory: 
-#setwd("~/Documents/GitHub/Collider_cognition/Main_scripts_newexp")
-df2 <- read.csv("../Data/ppts.csv")
+load(here("Data", "Data.RData"))
 ansprops <- df2 %>% group_by(pgroup, trialtype, scenario, node3) %>% summarise(n=n())
 
 names <- c(1:4)
@@ -102,7 +100,7 @@ for (pg in pgroups) {
 print(pvals)
 ```
 
-So there are only two conditions where the cover stories make a difference at < 0.01: 2_d7 and 3_d7. (ie., disjunctive A=1, B=1, E=1, which is the overdetermined 'most important' case). Trialtype d2 (A=0, B=1, E=0) also sneaks in there sometimes. 
+There are only two conditions where the cover stories make a difference at < 0.01: 2_d7 and 3_d7. (ie., both disjunctive A=1, B=1, E=1, which is the overdetermined 'most important' case). Trialtype d2 (A=0, B=1, E=0) also not robust. 
 
 In fact, the numbers are not comparable: because of the way the probabilities and cover stories were sampled rather than force divided and matched, perhaps there are more in some condition by a quirk of sampling? 
 
@@ -157,6 +155,6 @@ ggplot(smb2l %>% filter(pgroup==3),
 
 ```
 
-So in general... not sure what to do. It seems for this important trialtype (D111) the cover stories give rise to different participant behaviours. Especially the cafe one (here called 'cook' for legacy reasons - that didn't affect what participants saw) and the job one are dissociated.
+There is still a slight difference where for this important trialtype (D111) the cover stories give rise to different participant behaviours. Especially odd that the cafe one (here called 'cook' for legacy reasons - that didn't affect what participants saw) and the job one are dissociated.
 
-I guess the next thing is to compare with model predictions? but I should find the reason first. How should I report it, if people react differently to different stories?
+If this was a serious difference, the next thing would be to compare with model predictions. It may also have reporting implications. But - on balance and discussion it can be ascribed to noise - it is not unheard of to have different proportions and we should not expect strictly uniform across the board.
