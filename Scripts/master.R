@@ -29,7 +29,7 @@ source(here('Scripts', '04processPreds.R'))  #
 
 # -------------3. Results: fit model, compare predictions, plot etc
 
-source(here('Scripts', '05getLesions.R')) #
+source(here('Scripts', '05getLesions.R')) # 
 source(here('Scripts', '06optimise.R'))
 source(here('Scripts', '07processForPlot.R')) 
 

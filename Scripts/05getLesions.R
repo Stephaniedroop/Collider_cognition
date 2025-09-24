@@ -171,24 +171,63 @@ modelAndData <- modelAndData |>
   group_by(trial_id) |>
   mutate(baseline = 1 / n())
 
-# Merge just columns A,B,E of data into modelandData
-tomerge <- data |> 
-  select(pgroup, trialtype, A, B, E) |>
-  distinct(pgroup, trialtype, .keep_all = TRUE) |>
-  unite('trial_id', pgroup, trialtype, sep = "_", remove = TRUE)
+# Actually let's call it df
+df <- modelAndData
 
-df <- merge(x = modelAndData, y = tomerge, by = 'trial_id', all.x = TRUE)
+#-------- Create variables coding the actual observation -------------
+# We had this before in data, but it wasn't right because of the incomplete counterbalancing issue
+# We know trialtype is right, so let's recode
+df.map <- data.frame(condition = c('c1','c2','c3','c4','c5','d1','d2','d3','d4','d5','d6','d7'),
+                   A = c(0,0,1,1,1, 0,0,0,1,1,1,1),
+                   B = c(0,1,0,1,1, 0,1,1,0,0,1,1),
+                   E = c(0,0,0,0,1, 0,0,1,0,1,0,1))
+
+for (i in 1:nrow(df))
+{
+  df$A[i] <- df.map$A[df.map$condition == df$trialtype[i]]
+  df$B[i] <- df.map$B[df.map$condition == df$trialtype[i]]
+  df$E[i] <- df.map$E[df.map$condition == df$trialtype[i]]
+}
 
 # Although we don't filter by Include because now we have the epsilon par, still nice to know how many ppts choose noise
 df <- df |>
-  mutate(include = !( (node3=='B=0' & B==1) | 
+  mutate(Include = !( (node3=='B=0' & B==1) | 
                         (node3=='B=1' & B==0) | 
                         (node3=='A=0' & A==1) | 
                         (node3=='A=1' & A==0)))
 
+# Now is a good time to get some other variables
+
+# Add a column called Observed, which is TRUE if they selected an observed variable (A or B) and FALSE if unobserved (Au or Bu)
+df <- df |>
+  mutate(Observed = if_else(node3 %in% c('A=0', 'A=1', 'B=0', 'B=1'), TRUE, FALSE))
+
+# Now change some values of Known from FALSE to TRUE, 
+# where the unobserved variable can be logically inferred from the situation
+# That means: 
+# -- in c5 both Au=1 and Bu=1 
+# -- in d2 Bu=0
+# -- in d3 Bu=1
+# -- in d4 Au=0
+# -- in d5 Au=1
+# -- in d6 both Au=0 and Bu=0
+
+# A new version of Known, like before except also has TRUE for any times node3 is A or B, plus the conditions before named, and otherwise false
+df <- df |> 
+  mutate(Known = case_when(
+    node3 %in% c('A=0','A=1','B=0','B=1') ~ TRUE,
+    trialtype=='c5' & node3 %in% c('Au=1','Bu=1') ~ TRUE,
+    trialtype=='d2' & node3=='Bu=0' ~ TRUE,
+    trialtype=='d3' & node3=='Bu=1' ~ TRUE,
+    trialtype=='d4' & node3=='Au=0' ~ TRUE,
+    trialtype=='d5' & node3=='Au=1' ~ TRUE,
+    trialtype=='d6' & node3 %in% c('Au=0','Bu=0') ~ TRUE,
+    TRUE ~ FALSE
+  ))
+
 
 # These need some small prob value allocated by the softmax, so give -Inf here
-df[df$include == FALSE, 8:15] <- -Inf
+df[df$Include == FALSE, 8:15] <- -Inf
 
 
 ## ---------------------------------------------------------------------------------------------------------------

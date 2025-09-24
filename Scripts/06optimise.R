@@ -5,7 +5,7 @@
 load(here('Data', 'modelData', 'modelAndDataUnfit.rda')) # functions to run the model
 
 # ------------- An extra section for reporting noisy answers -------------
-nons <- sum(df$n[df$include == FALSE]) #132 / 2580.   389???!!
+nons <- sum(df$n[df$Include == FALSE]) #132 / 2580.   389???!!
 
 ppl <- df |> 
   group_by(trial_id) |> 
@@ -62,7 +62,7 @@ model_names2 <- c('noKind',
 df <- df |> 
   relocate(baseline, .before = Actual)
 
-colnames(df)[9:17] <- model_names2
+colnames(df)[8:16] <- model_names2
 
 results2 <- optimize_models2(model_names2, df)
 
@@ -70,7 +70,6 @@ print(results2)
 
 
 allpredictions <- rbind(results1$predictions, results2$predictions) # 4608: 36tt x 8 nodevals x 16 models 
-
 
 ## ---------------------------------------------------------------------------------------------------------------
 df_wide <- allpredictions |>
@@ -80,17 +79,14 @@ df_wide <- allpredictions |>
     values_from = predicted_prob
   )
 
-
-
 ## ---------------------------------------------------------------------------------------------------------------
 justppt <- df |> 
-  select(trial_id, node3, n, prop, pgroup, Actual, A, B, E, include)
+  select(trial_id, node3, n, prop, pgroup, Actual, A, B, E, Include, Observed, Known)
 
 fitforplot <- merge(df_wide, justppt, by = c('trial_id', 'node3'))
-fitforplot[, 22][is.na(fitforplot[, 22])] <- FALSE
-
+# Set the NAs in Actual to False
+fitforplot[, 23][is.na(fitforplot[, 23])] <- FALSE
 
 ## ---------------------------------------------------------------------------------------------------------------
 
-#saveRDS(fitforplot, '../Data/modelData/fit16mpn.rda')
 save(fitforplot, file = here('Data', 'modelData', 'fit16mpn.rda'))

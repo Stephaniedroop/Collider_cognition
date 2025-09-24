@@ -228,21 +228,10 @@ df2 <- df2 |>
 df2 <- df2 |> 
   unite('trial_id', pgroup, trialtype, sep = "_", remove = FALSE)
 
-# This var include is no longer necessary because the epsilon par allows all data to be modelled even with noise
-# But let's keep it anyway just for some checks
-df2 <- df2 |>
-  mutate(include = !( (node3=='B=0' & B==1) | 
-                        (node3=='B=1' & B==0) | 
-                        (node3=='A=0' & A==1) | 
-                        (node3=='A=1' & A==0)))
 
 # Add a column called Observed, which is TRUE if they selected an observed variable (A or B) and FALSE if unobserved (Au or Bu)
 df2 <- df2 |>
   mutate(Observed = if_else(node %in% c('A','B'), TRUE, FALSE))
-
-# Copy the column Observed to one called Known
-# df2 <- df2 |> 
-#   mutate(Known = Observed)
 
 # Now change some values of Known from FALSE to TRUE, 
 # where the unobserved variable can be logically inferred from the situation
@@ -266,6 +255,8 @@ df2 <- df2 |>
     trialtype=='d6' & node3 %in% c('Au=0','Bu=0') ~ TRUE,
     TRUE ~ FALSE
   ))
+
+# NOTE: use trialtype but don't use A,B,E, because of the counterbalancing issue they no longer match
 
 # Now arrange df2 so all subjects are in order, and within each subject all trials are in order
 df2 <- df2 |>

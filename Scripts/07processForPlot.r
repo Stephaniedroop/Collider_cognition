@@ -3,7 +3,7 @@
 #########################################################################################
 
 # Load fit16mp 
-load(here::here('Data', 'ModelData', 'fit16mp.rda'))
+load(here::here('Data', 'ModelData', 'fit16mpn.rda'))
 
 
 # Wrangling and renaming of some factors and variables to make them individual per trial and useful for plotting
@@ -11,6 +11,12 @@ load(here::here('Data', 'ModelData', 'fit16mp.rda'))
 
 df$structure <- ifelse(substr(df$trial_id, 3, 3) == "c", "conjunctive", 
                        ifelse(substr(df$trial_id, 3, 3) == "d", "disjunctive", NA))
+
+df <- df |>
+  mutate(across(where(is.character), as.factor))
+
+df <- df |>
+  mutate(across(where(is.logical), as.factor))
 
 
 df$trial_type <- recode(df$trial_id, 
@@ -89,7 +95,8 @@ df$trial_structure_type <- recode(df$trial_id,
                                   "3_d6"="Disjunctive: A=1,B=1,E=0",
                                   "3_d7"="Disjunctive: A=1,B=1,E=1")
 
-df<- df %>% mutate(trial_type = factor(trial_type, levels = c("A=0,B=0,E=0",
+df<- df |> 
+  mutate(trial_type = factor(trial_type, levels = c("A=0,B=0,E=0",
                                                               "A=0,B=1,E=0",
                                                               "A=0,B=1,E=1",
                                                               "A=1,B=0,E=0",
@@ -113,13 +120,14 @@ df<- df %>% mutate(trial_type = factor(trial_type, levels = c("A=0,B=0,E=0",
                                                                     'A=.5,Au=.1,B=.5,Bu=.8',
                                                                     'A=.1,Au=.7,B=.8,Bu=.5')),
                    Response = factor(node3),
-                   Observed = factor(!Response%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(T,F)),
-                   Variable = factor(substr(node3, 1, 1)),
+                   #Observed = factor(!Response%in%c('Au=0','Au=1','Bu=0', 'Bu=1'), levels = c(T,F)),
+                   Variable = factor(substr(node3, 1, 1))
                    #State = factor(rep(c(0,1), 144)),
-                   Actual = factor(Actual, levels = c(FALSE, TRUE), labels = c('FALSE', 'TRUE')))
+                   #Actual = factor(Actual, levels = c(FALSE, TRUE), labels = c('FALSE', 'TRUE')),
+                  )
 
-df$trial_id <- as.factor(df$trial_id)
-df$node3 <- as.factor(df$node3)
+#df$trial_id <- as.factor(df$trial_id)
+#df$node3 <- as.factor(df$node3)
 
 df$SE <- NA
 
@@ -129,7 +137,7 @@ for (i in unique(df$trial_id))
   df$SE[df$trial_id==i]<-sqrt((df$prop[df$trial_id==i] * (1-df$prop[df$trial_id==i])) / sum(df$n[df$trial_id==i]))
 }
 
-df$Actual[is.na(df$Actual)] <- FALSE
+#df$Actual[is.na(df$Actual)] <- FALSE
 
 
 # save
