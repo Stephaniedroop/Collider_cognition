@@ -7,6 +7,11 @@ library(tidyverse)
 library(ggnewscale) # Load these if you don't have them
 library(here)
 library(RColorBrewer)
+library(ggplot2)
+library(lme4)
+library(lmerTest)
+
+set.seed(12)
 
 # ------------- 0. Source utils -------------
 source(here('Scripts', 'cesmUtils.R')) # Functions for running the cesm model
@@ -35,11 +40,15 @@ source(here('Scripts', '07processForPlot.R'))
 
 # restructuring done to here
 
-source(here('Scripts', '08samplePredictions.R')) # Sample explanations from model
+source(here('Scripts', '08samplePreds.R')) # Sample explanations from model. Input `fitforplot16m.rda` for model, `Data.Rdata` for ppt data, output `matchedByppt.rda`
+source(here('Scripts', '09testSamp.R')) # Test the matched sampled explanations against participants for our theory metrics
+# Note - the following reporting figs use the probdist style model predictions, not the matched sampled explanations, which are still for full model only
 source(here('Scripts', '10reportFigs.R')) # Reporting plots on proportion model prediction, ie not the sampled explanations
 source(here('Scripts', '11reportFigs2.R')) # Other calls not using functions; aggregate plots on unobserved v observed
-source(here('Scripts', '11plotMatchedSamples.R')) # In process - so far gives the same layout as the simpler proportional ones
-source(here('Scripts', '12fitByppt.R')) # Likelihood and model fit by participant
+source(here('Scripts', '12fitByppt.R')) # Best model fit by participant
+
+# to here in reconstruction
+# plots matched samples -  In process - so far gives the same layout as the simpler proportional ones
 
 source(here('Scripts', '13itemLevelChisq.R')) # Check ppt n against a uniform distribution. Uses modelAndDataUnfit because that's a useful place for ppts grouped by trial_id, but doesn't use the model
 source(here('Scripts', '14abnormalInflation.R')) # Is the phenomenon found in our results? Only uses particpant Data.Rdata and doesn't need the model

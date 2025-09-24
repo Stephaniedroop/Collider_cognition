@@ -5,6 +5,7 @@
 # Load fit16mp 
 load(here::here('Data', 'ModelData', 'fit16mpn.rda'))
 
+df <- fitforplot # naming consistency sigh
 
 # Wrangling and renaming of some factors and variables to make them individual per trial and useful for plotting
 # Some vars may exist already in this new version so check first
