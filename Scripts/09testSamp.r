@@ -2,6 +2,12 @@
 ########### Statistical tests on forced model samples matched to participant rows ##########
 ###############################################################################################
 
+
+library(tidyverse)
+library(here)
+library(lme4)
+library(lmerTest)
+
 # Test the matched sampled explanations against participants for our theory metrics:
 # - OBSERVED
 # - ACTUAL

@@ -2,6 +2,11 @@
 ########### Other plots not using functions  ##############
 ###########################################################
 
+library(tidyverse)
+library(ggnewscale) # Load these if you don't have them
+library(here)
+library(RColorBrewer)
+library(ggplot2)
 
 # Now just observed v unobserved for everything together, noKind model. 
 # It needs chunks to calculate separate long and summary dfs for the new se values - they are different because different numbers of observations in the means.

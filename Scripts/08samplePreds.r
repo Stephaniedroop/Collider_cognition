@@ -2,6 +2,9 @@
 ########### Sample predictions from model to match with each participant ##########
 #################################################################################
 
+library(tidyverse)
+library(here)
+
 # The model predictions are currently probability distributions spread over the 8 node values 
 # (the 8 explanations for each possible outcome). I want to force the model to give an actual answer, 
 # to pair with each participant's observation. This cannot just be the same probability each time, 

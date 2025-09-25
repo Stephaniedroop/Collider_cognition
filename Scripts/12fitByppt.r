@@ -2,6 +2,8 @@
 ########### Model fit by participant ################
 #####################################################
 
+library(tidyverse)
+library(here)
 
 
 load(here('Data', 'Data.Rdata')) # This is one big df, 'df2', 2580, of 215 ppts

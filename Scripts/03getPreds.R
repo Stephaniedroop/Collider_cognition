@@ -1,9 +1,12 @@
 #################################################### 
 ###### Collider - get model predictions  #####
 ####################################################
-# Script to set up probability vectors of each variable, then run a series of fucntions from source file `cesmUtils`
+# Script to set up probability vectors of each variable, then run a series of functions from source file `cesmUtils`
 # to implement the cesm and save the model predictions for each run
 
+library(tidyverse)
+library(here)
+source(here('Scripts', 'cesmUtils.R')) # Functions for running the cesm model
 
 # Other values set outside for now 
 N_cf <- 100000L # How many counterfactual samples to draw

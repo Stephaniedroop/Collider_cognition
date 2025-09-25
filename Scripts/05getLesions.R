@@ -1,6 +1,8 @@
 ##################################################################
 ######## Get lesions and combine with data ############
 
+library(tidyverse)
+library(here)
 
 # Script takes the processed data from the collider ppt expt (`DATA.RDATA`) 
 # and combines it with the pre-processed model predictions to get all the other model modules and lesions

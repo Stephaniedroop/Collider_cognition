@@ -2,6 +2,9 @@
 ########### Processing cesm model predictions to be neater and get the other modules ##########
 #########################################################################################
 
+library(tidyverse)
+library(here)
+
 # Load fit16mp 
 load(here::here('Data', 'ModelData', 'fit16mpn.rda'))
 

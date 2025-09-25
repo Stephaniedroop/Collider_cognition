@@ -3,6 +3,10 @@
 #################################################################################
 
 
+library(tidyverse)
+library(rjson)
+library(here)
+
 # Get individual csvs into a list
 csvList <- lapply(list.files(here("Data", "new"), full.names = TRUE), 
                   read.csv, stringsAsFactors = F)

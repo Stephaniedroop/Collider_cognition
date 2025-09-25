@@ -2,6 +2,11 @@
 ######## Optimise params and NLL ################
 ##################################################################
 
+
+library(tidyverse)
+library(here)
+source(here('Scripts', 'optimUtils.R')) # functions to optimise
+
 load(here('Data', 'modelData', 'modelAndDataUnfit.rda')) # functions to run the model
 
 # ------------- An extra section for reporting noisy answers -------------
