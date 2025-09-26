@@ -10,7 +10,7 @@ library(RColorBrewer)
 library(ggplot2)
 
 
-load(here('Data', 'modelData', 'fitforplot.rda')) # 1440
+load(here('Data', 'modelData', 'fitforplot16m.rda')) # 288 of 35
 pgroups <- levels(df$pgroup)
 
 # Individual plots for all models for all pgroups: (can be used for visual comparisons but otherwise not expected to be needed)

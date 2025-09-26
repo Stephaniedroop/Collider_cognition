@@ -145,4 +145,4 @@ for (i in unique(df$trial_id))
 
 
 # save
-save(df, file=here::here('Data', 'ModelData', 'fitforplot16m.rda'))
+save(df, file=here::here('Data', 'ModelData', 'fitforplot16m.rda')) # Goes to script 10 and 11

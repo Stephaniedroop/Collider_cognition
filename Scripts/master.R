@@ -46,17 +46,9 @@ source(here('Scripts', '09testSamp.R')) # Test the matched sampled explanations 
 source(here('Scripts', '10reportFigs.R')) # Reporting plots on proportion model prediction, ie not the sampled explanations
 source(here('Scripts', '11reportFigs2.R')) # Other calls not using functions; aggregate plots on unobserved v observed
 source(here('Scripts', '12fitByppt.R')) # Best model fit by participant
+# Plots to show difference in Known and Observed status between matched sampled explanations and participants
+source(here('Scripts', '13plotMatchSamp.R')) # (maybe not in the best order: this takes output of 08 and 09)
 
-# to here in reconstruction
-# plots matched samples -  In process - so far gives the same layout as the simpler proportional ones
-
-source(here('Scripts', '13itemLevelChisq.R')) # Check ppt n against a uniform distribution. Uses modelAndDataUnfit because that's a useful place for ppts grouped by trial_id, but doesn't use the model
-source(here('Scripts', '14abnormalInflation.R')) # Is the phenomenon found in our results? Only uses particpant Data.Rdata and doesn't need the model
-
-# source(knitr::purl('samplePredictions.Rmd')) 
-# source(knitr::purl('reportingFigs16.Rmd')) 
-# source(knitr::purl('plotMatchedSamples.Rmd')) 
-source(knitr::purl('by_ppt_fitting.Rmd')) 
 
 # ------------- 4. Standalone analyses ------------
 source(here::here("Scripts", "Standalone", "demogs.R"))

@@ -8,18 +8,68 @@ library(here)
 library(RColorBrewer)
 library(ggplot2)
 
+
+load(here('Data', 'modelData', 'fitforplot16m.rda')) # 288
+
 # Now just observed v unobserved for everything together, noKind model. 
 # It needs chunks to calculate separate long and summary dfs for the new se values - they are different because different numbers of observations in the means.
 
+# --------- KNOWN, FULL ----------
+# Follow pattern of the one below for observed
+
+# 1. Gather and calculate mean and SE per group - 576 of 5
+df_long0 <- df |>
+  select(trial_id, node3, prop, full, Known) |> 
+  gather(key, val, prop:full) |>
+  filter(!is.na(val)) |>
+  mutate(key = factor(key, levels = c("prop", "full"),
+                      labels = c("Participants", "Model")))
+
+summary_df0 <- df_long0 |>
+  group_by(Known, key) |>
+  summarise(
+    val_sum = sum(val),
+    se = sd(val) / sqrt(n())) |>
+  mutate(val = val_sum / 36) |>
+  select(-val_sum) |>
+  ungroup()
+
+# 2. Plot with bars and error bars
+pknown <- ggplot(summary_df0, aes(x = key, y = val, fill = Known)) +
+  geom_bar(stat = "identity", position = position_dodge(0.9)) +
+  geom_errorbar(aes(ymin = val - se, ymax = val + se),
+                width = 0.2, position = position_dodge(0.9)) +
+  labs(x = "Response", y = "Proportion/Prediction", fill = "Known status") +
+  scale_fill_brewer(palette = "Set2") + #, labels = c("", "")
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 10))
+
+print(pknown)
+
+ggsave(
+  filename = "pknown.pdf",
+  plot = pknown,
+  path = here("Other", "Plots"),
+  width = 12,
+  #height = 6,
+  units = "in"
+)
+
+# This is good but actually for the statistical test we need to do it on the sampled-matched explanations data
+
+# -------- OBSERVED, NOKIND  -------
+
 # 1. Gather and calculate mean and SE per group
-df_long <- df |>
+df_long1 <- df |>
   select(trial_id, node3, prop, noKind, Observed) |> 
   gather(key, val, prop:noKind) |>
   filter(!is.na(val)) |>
   mutate(key = factor(key, levels = c("prop", "noKind"),
                       labels = c("Participants", "Model")))
 
-summary_df <- df_long |>
+summary_df1 <- df_long |>
   group_by(Observed, key) |>
   summarise(
     val_sum = sum(val),
@@ -31,7 +81,7 @@ summary_df <- df_long |>
 
 
 # 2. Plot with bars and error bars
-punnk <- ggplot(summary_df, aes(x = key, y = val, fill = Observed)) +
+punnk <- ggplot(summary_df1, aes(x = key, y = val, fill = Observed)) +
   geom_bar(stat = "identity", position = position_dodge(0.9)) +
   geom_errorbar(aes(ymin = val - se, ymax = val + se),
                 width = 0.2, position = position_dodge(0.9)) +
@@ -53,6 +103,8 @@ ggsave(
   #height = 6,
   units = "in"
 )
+
+# --------- OBSERVED, FULL ----------
 
 # Repeat just the observed v unobs for the full model just in case it's needed, 
 # although it gives the same results as noKind, because k is so small in the best fitting models
@@ -100,14 +152,20 @@ ggsave(
   units = "in"
 )
 
+# ------------- STRUCTURE AND EFFECT, FULL --------------
+
 #### A panel splitting out observed v observed, for the full model
 
 # Now same thing for structure only
-df.s <- df |> gather(key, val, prop:full) |> mutate(key = factor(key, levels = c('prop', 'full'),
-                                                                   labels = c("Participants", "Full Model"))) |>
-  group_by(Observed, key, structure, E) |> summarise(val = sum(val)/3)
+df.s <- df |> 
+  gather(key, val, prop:full) |> 
+  mutate(key = factor(key, levels = c('prop', 'full'),
+                      labels = c("Participants", "Full Model"))) |>
+  group_by(Observed, key, structure, E) |> 
+  summarise(val = sum(val)/3)
 
-df.s <- df.s |> filter(!is.na(key))
+df.s <- df.s |> 
+  filter(!is.na(key))
 
 df.s$struct_effect <- paste0(df.s$structure, df.s$E)
 
@@ -145,6 +203,8 @@ ggsave(
   #height = 6,
   units = "in"
 )
+
+# --------------- STRUCTURE AND EFFECT, NOKIND -------------
 
 #### The next two chunks make a plot for noKind for unobserved v Effect
 
@@ -236,6 +296,8 @@ ggsave(
   #height = 6,
   units = "in"
 )
+
+# -------------- 111 -----------------
 
 ### A section of plots for simple 111s for a few different models: full, noSelect, noKind
 

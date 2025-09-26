@@ -35,7 +35,7 @@ model_predictions_wide <- justmp |>
     values_from = full
   )
 
-# Note: this samples from the full model, so maybe we should try noKind
+# Note: this samples from the full model, so maybe we should try noKind later??
 
 # Next section samples a variable as explanation for each participant trial, 
 # for that world condition, to match against the participant's answer
