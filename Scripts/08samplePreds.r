@@ -5,6 +5,8 @@
 library(tidyverse)
 library(here)
 
+set.seed(12)
+
 # The model predictions are currently probability distributions spread over the 8 node values 
 # (the 8 explanations for each possible outcome). I want to force the model to give an actual answer, 
 # to pair with each participant's observation. This cannot just be the same probability each time, 
@@ -12,7 +14,7 @@ library(here)
 
 # This needs the participant data by row, and then the model data too. 
 
-load(here('Data', 'modelData', 'fitforplot16m.rda')) # model df, 288 obs of 35
+load(here('Data', 'modelData', 'fitforplot16ig.rda')) # model df, 288 obs of 35
 load(here('Data', 'Data.rdata')) # participant data, 2580 obs of 22
 
 # Reduced participant data to just what they selected per trial, with numbered rows
@@ -108,7 +110,7 @@ fortest <- pivot_longer(modAndDat, cols = -c(subject_id, trial_id),
 
 fortest$subject_id <- as.factor(fortest$subject_id)
 fortest$trial_id <- as.factor(fortest$trial_id)
-fortest$Respondent <- as.factor(fortest$Respondent)
+fortest$Respondent <- factor(fortest$Respondent, levels = c('sampled_variable', 'node3'))
 fortest$Response <- as.factor(fortest$Response)
 
 # ----------- Merge back in to get the full data for plotting -------------
@@ -134,4 +136,4 @@ merged <- fortest |>
 
 
 # save
-save(merged, file = here('Data', 'modelData', 'matchedByppt.rda'))
+save(merged, file = here('Data', 'modelData', 'matchedBypptig.rda'))

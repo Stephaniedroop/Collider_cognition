@@ -5,7 +5,7 @@
 library(tidyverse)
 library(here)
 
-load(here('Data', 'modelData', 'matchedByppt.rda')) # loads merged 5160 of 14
+load(here('Data', 'modelData', 'matchedBypptig.rda')) # loads merged 5160 of 14
 df <- merged
 
 

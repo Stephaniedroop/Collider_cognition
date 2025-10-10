@@ -1,28 +1,20 @@
-##################################################################
-######## Optimise params and NLL ################
-##################################################################
+# ==========================================================
+#   Alternative model fits on just the E=1 cases 
+# ==========================================================
 
+# LIke optimise script, but first filter for only E=1 cases
 
 library(tidyverse)
 library(here)
 library(xtable)
 source(here('Scripts', 'optimUtils.R')) # functions to optimise
 
-set.seed(12)
-
 load(here('Data', 'modelData', 'modelAndDataUnfitig.rda')) # df, 288 of 23
 
-# ------------- An extra section for reporting noisy answers -------------
-nons <- sum(df$n[df$Include == FALSE]) #132 / 2580.   389???!!
+# Then filter for trialtype %in% c('c5', 'd3', 'd5', d7')
+df <- df |> 
+  filter(trialtype %in% c('c5', 'd3', 'd5', 'd7')) # 96 obs
 
-ppl <- df |> 
-  group_by(trial_id) |> 
-  summarise(n=sum(n)) 
-
-sum(ppl$n) # 2580
-
-# For old experiment it is 50/3408 = .0147
-# For new experiment it is 132/2580 = .0511 now it is 15.1 %???!!
 
 # -------------- Run the functions ------------------
 
@@ -48,11 +40,9 @@ results1 <- optimize_models(model_names, df)
 print(results1)
 
 # Format results1$model_fits in latex code in a table for publication in a paper
-results1$model_fits[, -1] <- apply(results1$model_fits[, -1], 2, trim_zeros) # This in combination with the uncommented line in the function 
-xtable(results1$model_fits[, -1], digits = 3)
-
-
-
+# This way doesn't print the model names but we can get them above
+results1$model_fits <- sapply(results1$model_fits, trim_zeros)
+xtable(results1$model_fits, digits = 3)
 
 # -------------- The two par version --------------
 
@@ -63,14 +53,14 @@ i <- 1
 
 # Usage:
 model_names2 <- c('noKind', 
-                 'noActnoKind', 
-                 'noInfnoKind', 
-                 'noKindnoSelect', 
-                 'noActnoInfnoKind', 
-                 'noActnoKindnoSelect', 
-                 'noInfnoKindnoSelect', 
-                 'noActnoInfnoKindnoSelect',
-                 'baseline')  
+                  'noActnoKind', 
+                  'noInfnoKind', 
+                  'noKindnoSelect', 
+                  'noActnoInfnoKind', 
+                  'noActnoKindnoSelect', 
+                  'noInfnoKindnoSelect', 
+                  'noActnoInfnoKindnoSelect',
+                  'baseline')  
 
 # Replace the predictions with the model_names2 (this is fine because the presence or absence of the other modules remains same)
 df <- df |> 
@@ -82,20 +72,15 @@ results2 <- optimize_models2(model_names2, df)
 
 print(results2)
 
-# Basically, currently, there is no need for kappa to scale the distance or information gain: 
-# we get the benefit just by adding it to the model prediction
 
 
 # Format results1$model_fits in latex code in a table for publication in a paper
-results2$model_fits[, -1] <- apply(results2$model_fits[, -1], 2, trim_zeros) # This in combination with the uncommented line in the function 
-xtable(results2$model_fits[, -1], digits = 3)
-
-
+# This way doesn't print the model names but we can get them above
+results2$model_fits <- sapply(results2$model_fits, trim_zeros)
+xtable(results2$model_fits, digits = 3)
 
 
 allpredictions <- rbind(results1$predictions, results2$predictions) # 4608: 36tt x 8 nodevals x 16 models 
-
-
 
 ## ---------------------------------------------------------------------------------------------------------------
 df_wide <- allpredictions |>
@@ -115,4 +100,4 @@ fitforplot[, 23][is.na(fitforplot[, 23])] <- FALSE
 
 ## ---------------------------------------------------------------------------------------------------------------
 
-save(fitforplot, file = here('Data', 'modelData', 'fit16ig.rda')) # Full is 8635. noActnoSelect fits best, at 8523
+save(fitforplot, file = here('Data', 'modelData', 'fit111.rda'))

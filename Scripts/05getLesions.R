@@ -32,20 +32,48 @@ mp <- mp |>
   mutate(cesmActual = cesm*Actual)
 
 
-# FULL model - all modules inc kindness #1
-full <- mp |>  #1 
-  group_by(pgroup, trialtype, node3, .drop=F) |> 
-  summarise(full = sum(cesmActual*posterior)) 
+# FULL model - all modules #1
+# Posterior here means for the two unobserved vars 
+# full <- mp |>
+#   group_by(pgroup, trialtype, node3, .drop=F) |>
+#   summarise(full = sum(cesmActual*posterior))
 
-# Unnormalised and not incorporating K / tv distance yet - that comes in the optimise.R file
+# Unnormalised and not incorporating K / ig yet - that comes in the optimise.R file
+
+# Actually worried because it uses the combined AuBu value. what if we try the single posterior?
+
+# what if we bring in expected information gain from prior to posterior?
+# eig is expected information gain from prior to posterior where eig is reduction in entropy
+# IG(S, a) = H(S) - H(S | a)
+
+# - H(S) is entropy for the dataset before any change, and
+# - H(S | a) is the *conditional entropy* for the datset given variable a
+
+# Simple ig of each pair of unobserved vars 
+# model_ig <- mp |>  
+#   group_by(pgroup, trialtype, uAuB, .drop=F) |> 
+#   summarise(prior_entropy = round(-sum(PrUn * log2(PrUn + 1e-10)), 3),
+#           post_entropy = round(-sum(posterior * log2(posterior + 1e-10)), 3),
+#           ig = round(prior_entropy - post_entropy, 3),
+#           .groups = "drop")
+
+# For expected info gain, go up a level, so at the trialtype level, and calculate expected information gain ie average of the ig
+# model_eig <- model_ig |> 
+#   group_by(pgroup, trialtype, .drop=F) |>
+#   summarise(eig = round(mean(ig), 3),
+#             .groups = "drop")
+
+# BUT this is no good, we need it at the level of each unobserved variable, so need the getpost below
+
 
 # -------- Next, lesion Actual and Inference  ------------
 
-# Uses plain cesm before treatment for Actual 
-noAct <- mp |>  #2
-  group_by(pgroup, trialtype, node3, .drop=F) |> 
-  summarise(noAct = sum(cesm*posterior)) 
+# Uses plain cesm before treatment for Actual SEE BELOW FOR A BETTER ONE
+# noAct <- mp |>  #2
+#   group_by(pgroup, trialtype, node3, .drop=F) |>
+#   summarise(noAct = sum(cesm*posterior))
 
+# ANYTHING WITH NO INF IS FINE THE WAY IT WAS
 # Uses the cesm after treatment for Actuality, but then uses prior of unobserved variables rather than posterior
 noInf <- mp |>  #3
   group_by(pgroup, trialtype, node3, .drop=F) |> 
@@ -58,20 +86,52 @@ noActnoInf <- mp |>  #6
 
 #--------- Lesioning causal selection - noSelect -------------
 
+# ------- Brief diversion to get the individual posteriors for info gain -----------
 # Get the individual posterior, for example:
 # For Au, keep Au fixed and sum the joint posterior for each possible value of Bu.
 
-getpost <- mp |> # 120 obs of 4
+getpost <- mp |> 
   filter(!node2 %in% c('A','B')) |> 
-  group_by(pgroup, trialtype, node) |> 
+  group_by(pgroup, trialtype, node3, .drop = F) |> # if we need Eig then go back and group by node2
   summarise(post = sum(posterior),
-            prior = sum(PrUn),
-            tv = round(abs((post-prior)),3)) # 'Total variation distance' between prior and posterior as proxy for Kindness
+            prior = sum(PrUn)) 
 
-postmp <- merge(mp, getpost, by = c('pgroup', 'trialtype', 'node'), all.x = TRUE)
+# This an old version when we were using tv as proxy for kindness
+# getpost <- mp |> # 
+#   filter(!node2 %in% c('A','B')) |> 
+#   group_by(pgroup, trialtype, node3) |> 
+#   summarise(post = sum(posterior),
+#             prior = sum(PrUn),
+#             tv = round(abs((post-prior)),3)) # 'Total variation distance' between prior and posterior as proxy for Kindness
 
-# For A and B, gives 1 when E matches, 0 if not. This sets B to 1 for actual cause, eg. if B=0 when E=0
-postmp <- postmp |> 
+
+# Simple ig of each pair of unobserved vars 
+unobs_ig <- getpost |>  
+  group_by(pgroup, trialtype, node3) |>  # if we need eig then go back and group by node2
+  summarise(prior_entropy = round(-sum(prior * log2(prior + 1e-10)), 3),
+            post_entropy = round(-sum(post * log2(post + 1e-10)), 3),
+            ig = round(prior_entropy - post_entropy, 3)) |> 
+  ungroup()
+
+# For expected info gain, go up a level, so at the trialtype level, and calculate expected information gain ie average of the ig
+# unobs_eig <- unobs_ig |> 
+#   group_by(pgroup, trialtype, node2) |>
+#   summarise(eig = round(mean(ig), 3))
+
+# Merge only column ig of unobs_ig with mp to get postig
+ig <- unobs_ig |> 
+  select(pgroup, trialtype, node3, ig)
+
+postigi <- merge(mp, getpost, by = c('pgroup', 'trialtype', 'node3'), all.x = TRUE)
+
+postig <- merge(postigi, ig, by = c('pgroup', 'trialtype', 'node3'), all.x = TRUE)
+
+# Now treat ig just the same as tv later...
+
+# Continue as below
+
+# An intermediate measure: For A and B, gives 1 when E matches, 0 if not. This sets B to 1 for actual cause, eg. if B=0 when E=0
+postig <- postig |> 
   mutate(Act1 = case_when(
     node2 == 'A' ~ Actual,
     node2 == 'B' ~ Actual,
@@ -79,7 +139,7 @@ postmp <- postmp |>
     node2 == 'Bu' ~ post
   ))
 
-postmp <- postmp |> 
+postig <- postig |> 
   mutate(noSelect = case_when(
     node2 == 'A' ~ Actual,
     node2 == 'B' ~ Actual,
@@ -88,13 +148,74 @@ postmp <- postmp |>
   ))
 
 
-noSelect <- postmp |> #14
+noSelect <- postig |> 
   group_by(pgroup, trialtype, node3, .drop=F) |> 
-  summarise(noSelect = mean(noSelect)) 
+  summarise(noSelect = mean(noSelect)) # These are meant to be mean, even though full is sum, because the same value is listed several times, one for each combination of unobs vars
 
-noActnoSelect <- postmp |> #14
+noActnoSelect <- postig |> 
   group_by(pgroup, trialtype, node3, .drop=F) |> 
   summarise(noActnoSelect = mean(Act1)) 
+
+# An extra test for full
+
+postig <- postig |>
+  mutate(full = case_when(
+    node2 == 'A' ~ cesmActual*posterior, # when it is observed you do definitley need to sum for the full model, because it is made of weighted averages
+    node2 == 'B' ~ cesmActual*posterior,
+    node2 == 'Au' ~ cesmActual*post,
+    node2 == 'Bu' ~ cesmActual*post
+  ))
+
+
+full <- postig |>
+  group_by(pgroup, trialtype, node3, .drop=F) |>
+  summarise(full = sum(full)) # Yes this should be sum because the differnet u values have differnet cesm values and they all combine
+
+# That makes me think we need other versions of all models...
+
+postig <- postig |>
+  mutate(noAct = case_when(
+    node2 == 'A' ~ cesm*posterior, # also sum
+    node2 == 'B' ~ cesm*posterior,
+    node2 == 'Au' ~ cesm*post,
+    node2 == 'Bu' ~ cesm*post
+  ))
+
+noAct <- postig |>  #2
+  group_by(pgroup, trialtype, node3, .drop=F) |>
+  summarise(noAct = sum(noAct)) # Likewise should be sum yes because the differnet u values have differnet cesm values and they all combine
+
+#write.csv(postig, 'postig.csv')
+# ------- Continuing the lesions -------------
+# UNCOMMENT ALL THIS IF THE INFO GAIN THING DOESNT WORK OUT!!
+
+# postmp <- merge(mp, getpost, by = c('pgroup', 'trialtype', 'node'), all.x = TRUE)
+# 
+# # For A and B, gives 1 when E matches, 0 if not. This sets B to 1 for actual cause, eg. if B=0 when E=0
+# postmp <- postmp |> 
+#   mutate(Act1 = case_when(
+#     node2 == 'A' ~ Actual,
+#     node2 == 'B' ~ Actual,
+#     node2 == 'Au' ~ post,
+#     node2 == 'Bu' ~ post
+#   ))
+# 
+# postmp <- postmp |> 
+#   mutate(noSelect = case_when(
+#     node2 == 'A' ~ Actual,
+#     node2 == 'B' ~ Actual,
+#     node2 == 'Au' ~ post*Actual,
+#     node2 == 'Bu' ~ post*Actual
+#   ))
+# 
+# 
+# noSelect <- postmp |> #14
+#   group_by(pgroup, trialtype, node3, .drop=F) |> 
+#   summarise(noSelect = mean(noSelect)) 
+# 
+# noActnoSelect <- postmp |> #14
+#   group_by(pgroup, trialtype, node3, .drop=F) |> 
+#   summarise(noActnoSelect = mean(Act1)) 
 
 #------- Lesion both inference and selection ---------
 # As before, but it's the prior instead of posterior
@@ -107,7 +228,7 @@ mp <- mp |>
     node2 == 'Bu' ~ peB*Actual
   ))
 
-noInfnoSelect <- mp |> #10
+noInfnoSelect <- mp |> 
   group_by(pgroup, trialtype, node3, .drop = F) |> 
   summarise(noInfnoSelect = mean(Act3))
 
@@ -155,12 +276,12 @@ dataNorm <- data |>
   tally() |> 
   mutate(prop=n/sum(n))
 
-tv2 <- getpost |> 
-  select(pgroup, trialtype, node, tv) |> 
-  rename(node3 = node)
+# tv2 <- getpost |> 
+#   select(pgroup, trialtype, node, tv) |> 
+#   rename(node3 = node)
 
 # Merge with data just because it's needed across all models so best do it once here
-dataNorm <- merge(x = dataNorm, y = tv2, all.x = T) 
+dataNorm <- merge(x = dataNorm, y = ig, all.x = T) 
 
 # ----------- 3. The actual merge! ------------ 
 
@@ -184,12 +305,21 @@ df.map <- data.frame(condition = c('c1','c2','c3','c4','c5','d1','d2','d3','d4',
                    B = c(0,1,0,1,1, 0,1,1,0,0,1,1),
                    E = c(0,0,0,0,1, 0,0,1,0,1,0,1))
 
-for (i in 1:nrow(df))
-{
-  df$A[i] <- df.map$A[df.map$condition == df$trialtype[i]]
-  df$B[i] <- df.map$B[df.map$condition == df$trialtype[i]]
-  df$E[i] <- df.map$E[df.map$condition == df$trialtype[i]]
-}
+# for (i in 1:nrow(df))
+# {
+#   df$A[i] <- df.map$A[df.map$condition == df$trialtype[i]]
+#   df$B[i] <- df.map$B[df.map$condition == df$trialtype[i]]
+#   df$E[i] <- df.map$E[df.map$condition == df$trialtype[i]]
+# }
+# 
+# df$A <- NA
+# df$B <- NA
+# df$E <- NA
+
+
+df <- df |>
+  left_join(df.map, by = c("trialtype" = "condition"))
+
 
 # Although we don't filter by Include because now we have the epsilon par, still nice to know how many ppts choose noise
 df <- df |>
@@ -217,7 +347,7 @@ df <- df |>
 # A new version of Known, like before except also has TRUE for any times node3 is A or B, plus the conditions before named, and otherwise false
 df <- df |> 
   mutate(Known = case_when(
-    node3 %in% c('A=0','A=1','B=0','B=1') ~ TRUE,
+    node3 %in% c('A=0','A=1','B=0','B=1') & Actual==TRUE ~ TRUE, # 
     trialtype=='c5' & node3 %in% c('Au=1','Bu=1') ~ TRUE,
     trialtype=='d2' & node3=='Bu=0' ~ TRUE,
     trialtype=='d3' & node3=='Bu=1' ~ TRUE,
@@ -227,12 +357,14 @@ df <- df |>
     TRUE ~ FALSE
   ))
 
+# Set ig to 0 where Known==False
+df$ig[df$Known == FALSE] <- 0
 
 # These need some small prob value allocated by the softmax, so give -Inf here
 df[df$Include == FALSE, 8:15] <- -Inf
 
 
 ## ---------------------------------------------------------------------------------------------------------------
-save(df, file = here('Data', 'modelData', 'modelAndDataUnfit.rda'))
+save(df, file = here('Data', 'modelData', 'modelAndDataUnfitig.rda'))
  
 

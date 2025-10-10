@@ -6,7 +6,7 @@ library(tidyverse)
 library(here)
 
 # Load fit16mp 
-load(here::here('Data', 'ModelData', 'fit16mpn.rda'))
+load(here('Data', 'ModelData', 'fit16ig.rda'))
 
 df <- fitforplot # naming consistency sigh
 
@@ -145,4 +145,4 @@ for (i in unique(df$trial_id))
 
 
 # save
-save(df, file=here::here('Data', 'ModelData', 'fitforplot16m.rda')) # Goes to script 10 and 11
+save(df, file=here('Data', 'ModelData', 'fitforplot16ig.rda')) # Goes to script 10 and 11 and 12

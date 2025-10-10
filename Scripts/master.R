@@ -45,9 +45,13 @@ source(here('Scripts', '09testSamp.R')) # Test the matched sampled explanations 
 # Note - the following reporting figs use the probdist style model predictions, not the matched sampled explanations, which are still for full model only
 source(here('Scripts', '10reportFigs.R')) # Reporting plots on proportion model prediction, ie not the sampled explanations
 source(here('Scripts', '11reportFigs2.R')) # Other calls not using functions; aggregate plots on unobserved v observed
-source(here('Scripts', '12fitByppt.R')) # Best model fit by participant
+source(here('Scripts', '12fitByppt.R')) # Best model fit by participant. Input: data.rda and fitforplot from processForplot
 # Plots to show difference in Known and Observed status between matched sampled explanations and participants
 source(here('Scripts', '13plotMatchSamp.R')) # (maybe not in the best order: this takes output of 08 and 09)
+
+# Maybe also redo the plots from 10 and 11 for the matched sampled.
+
+# See also modelFit111, to fit in later, and modelProcess111, which we may not need because the plotting can be done by filtering the full set
 
 
 # ------------- 4. Standalone analyses ------------
