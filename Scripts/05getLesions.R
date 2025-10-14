@@ -281,7 +281,7 @@ dataNorm <- data |>
 #   rename(node3 = node)
 
 # Merge with data just because it's needed across all models so best do it once here
-dataNorm <- merge(x = dataNorm, y = ig, all.x = T) 
+dataNorm <- merge(x = dataNorm, y = ig, by = c('pgroup', 'trialtype', 'node3')) #all.x = T) 
 
 # ----------- 3. The actual merge! ------------ 
 
@@ -360,9 +360,11 @@ df <- df |>
 # Set ig to 0 where Known==False
 df$ig[df$Known == FALSE] <- 0
 
-# These need some small prob value allocated by the softmax, so give -Inf here
+# In the softmax, 0 causal score will be given a relatively high score by the softmax. So give -Inf here
+# These will then be given some small value by the epislon noise part of the model prediction in the likelihood function
 df[df$Include == FALSE, 8:15] <- -Inf
 
+df$Actual[is.na(df$Actual)] <- FALSE
 
 ## ---------------------------------------------------------------------------------------------------------------
 save(df, file = here('Data', 'modelData', 'modelAndDataUnfitig.rda'))
