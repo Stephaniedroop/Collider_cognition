@@ -14,7 +14,7 @@ set.seed(12)
 
 # This needs the participant data by row, and then the model data too. 
 
-load(here('Data', 'modelData', 'fitforplot16ig.rda')) # model df, 288 obs of 35
+load(here('Data', 'modelData', 'fitforplot16k.rda')) # model df, 288 obs of 35
 load(here('Data', 'Data.rdata')) # participant data, 2580 obs of 22
 
 # Reduced participant data to just what they selected per trial, with numbered rows
@@ -28,16 +28,14 @@ datfortest <- data |>
 
 # Likewise reduce the model df to just what we need
 justmp <- df |> 
-  select(trial_id, node3, full)
+  select(trial_id, node3, noAct) # CHANGE HERE FOR THE BEST FITTING MODEL ------- FULL VS NOACT
 
 # 39x9 - just the FULL model, in wide form
 model_predictions_wide <- justmp |> 
   pivot_wider(
     names_from = node3,
-    values_from = full
+    values_from = noAct
   )
-
-# Note: this samples from the full model, so maybe we should try noKind later??
 
 # Next section samples a variable as explanation for each participant trial, 
 # for that world condition, to match against the participant's answer
@@ -136,4 +134,4 @@ merged <- fortest |>
 
 
 # save
-save(merged, file = here('Data', 'modelData', 'matchedBypptig.rda'))
+save(merged, file = here('Data', 'modelData', 'matchedBypptk.rda'))

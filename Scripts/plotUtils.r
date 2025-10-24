@@ -48,7 +48,7 @@ plot_model_pgroup <- function(model_colname, pgroup_label, df) {
     labs(
       x = 'Response',
       y = 'Proportion/Prediction',
-      title = sprintf("Model %s : %s", model_colname, pgroup_label)) +
+      title = sprintf("Model %s : %s", model_colname, pgroup_label)) + # I uncommented the title for the paper because APA title in caption
     scale_fill_brewer(palette = "Set2") + # , labels = c("Observed \n(A|B)", "Unobserved \n(Au|Bu)")
     scale_colour_manual(values = c('gray', 'black')) +
     guides(fill = guide_legend(override.aes = list(shape = NA))) + 
@@ -75,7 +75,7 @@ plot_model_pgroup <- function(model_colname, pgroup_label, df) {
                                 hjust = 0.5))
 }
 
-# Specific for Neil to plot only model no participants
+# Specific for Neil stanford talk to plot only model no participants
 plot_nomodel_pgroup <- function(pgroup_label, df) {
   df_filtered <- df |> 
     filter(pgroup == pgroup_label) 

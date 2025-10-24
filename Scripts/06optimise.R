@@ -26,10 +26,10 @@ load(here('Data', 'modelData', 'modelAndDataUnfitig.rda')) # df, 288 of 23
 
 # -------------- Run the functions ------------------
 
-# Currently in two versions, one for 3 pars and one for 2. Later will make the functions general for any number
+# Was in two versions, one for 3 pars and one for 2. Then made a new comparison table for the 3-par versions.
 
 # Initial values for testing:
-#pars <- c(1, 1, 1)
+#pars <- c(1, 1, 1) # This now in 'operatives list' in the optimUtils file
 mod_name <- 'full'
 i <- 1
 
@@ -52,80 +52,47 @@ print(results1)
 #---------- Model 1: -------------
 
 # Useful names for tables
-title1 <- "kappa acting on combinations of: ig, Known, Actual with ig restricted to 0 for Known=F" # CHANGE THIS TO CORRESPOND. Becomes caption in latex
-filename1 <- "3par_series_igr" # title for html
+title1 <- "kappa acting on ig vs Known" # Becomes caption in latex
+filename1 <- "3par_series_igk" # title for html
 
 # Format results1$model_fits in latex code in a table for publication in a paper
-results1$model_fits[, -c(1, 2)] <- apply(results1$model_fits[, -c(1, 2)], 2, trim_zeros) # This in combination with the uncommented line in the function 
+results1$model_fits[, -c(1, 2)] <- apply(results1$model_fits[, -c(1, 2)], 2, trim_zeros)  
 rownames(results1$model_fits) <- NULL
 
-xtab <- xtable(results1$model_fits, digits = 3, caption = title1) # caption = c('Full title', 'Short title')
+xtab <- xtable(results1$model_fits, digits = 3, caption = title1) # caption = c('Full title', 'Short title') if you wwant to include long tags
 
 # Then print to file in both tex and html
 print(xtab, file = here('Data', 'fitTables', paste0(filename1, '.tex')))     # LaTeX output
 print(xtab, type = 'html', file = here('Data', 'fitTables', paste0(filename1, '.html')))
 
-# ONLY USE THIS IF WE WANT TO PUT TABLES SIDE BY SIDE LATER
-# combine_operatives_fits <- function(operatives_fits_list, suffix_position = "suffix") {
-#   # operatives_fits_list: named list of data frames, e.g. list(op1 = df1, op2 = df2)
-#   # suffix_position: either "suffix" or "prefix" for how to rename param columns
-#   
-#   # Helper to rename columns except 'model'
-#   rename_params <- function(df, op_name) {
-#     cols <- colnames(df)
-#     # exclude 'model'
-#     params <- setdiff(cols, "model")
-#     
-#     if(suffix_position == "suffix") {
-#       new_names <- paste0(params, "_", op_name)
-#     } else if (suffix_position == "prefix") {
-#       new_names <- paste0(op_name, "_", params)
-#     } else {
-#       stop("suffix_position must be 'suffix' or 'prefix'")
-#     }
-#     
-#     colnames(df)[colnames(df) %in% params] <- new_names
-#     df
-#   }
-#   
-#   # Rename columns for each operative
-#   renamed_list <- mapply(rename_params, operatives_fits_list, names(operatives_fits_list), SIMPLIFY = FALSE)
-#   
-#   # Now reduce by joining all data frames on 'model'
-#   combined <- Reduce(function(x, y) full_join(x, y, by = "model"), renamed_list)
-#   
-#   # Optional: reorder rows by model name or factor
-#   combined <- combined %>% arrange(model)
-#   
-#   combined
-# }
-# 
-
-
-
-
-
-
-
 
 # And also .rds with long descriptive name and short name for easy reference later
 xtablabel <- list(
   data = xtab,
-  info = "Full name: Table of GLM fits for anxiety outcome, tags: age-adjusted, generated 2025-10-14, N=2200"
+  info = "Full name"
 )
 saveRDS(xtablabel, file = here('Data', 'fitTables', paste0(filename1, '.rds')))
 
-# ---------- Model 2 and onwards.... ------------
+#------------- SMALL HACKY SECTION TO PLOT `KNOWN` VERSION IN SERIES WITH LESIONED MODELS ------------
+
+# Filter for operatives==known_only
+results1$model_fits2 <- results1$model_fits |> 
+  filter(operatives == 'known_only')
+
+# Now remove the column called operatives
+results1$model_fits2 <- results1$model_fits2 |> 
+  select(-operatives)
+
+# Keep only the predictions for known_only too
+results1$predictions <- results1$predictions |> 
+  filter(operatives == 'known_only')
+
+# Remove the operatives column from predictions too
+results1$predictions <- results1$predictions |> 
+  select(-operatives)
 
 
-
-# Make a data structure like a list of lists for all the different model specs I want to try. 
-# This will make it easier to loop through them all and insert as the operative part of the likelihood function
-# Tried this in the utils file but too complicated
-
-
-
-# -------------- The two par version --------------
+# -------------- The two par version FOR ALL THE NOKIND SERIES --------------
 
 # Initial values for testing:
 pars <- c(1, 1)
@@ -153,23 +120,12 @@ results2 <- optimize_models2(model_names2, df)
 
 print(results2)
 
-# Basically, currently, there is no need for kappa to scale the distance or information gain: 
-# we get the benefit just by adding it to the model prediction
-
-
 # Format results1$model_fits in latex code in a table for publication in a paper
-results2$model_fits[, -1] <- apply(results2$model_fits[, -1], 2, trim_zeros) # This in combination with the uncommented line in the function 
+results2$model_fits[, -1] <- apply(results2$model_fits[, -1], 2, trim_zeros) 
 xtable(results2$model_fits[, -1], digits = 3)
 
-# ---------------- Test ai functions ----------------
 
-# Was asking for efficient function that can do it differently depending on the number of parameters and what the specific prediction model is, but can't get it to write for me
-
-
-
-
-
-# ------------- Once we have all predictions for a single model fits run, combine and process --------------------
+# ------------- Combine and process --------------------
 
 allpredictions <- rbind(results1$predictions, results2$predictions) # 4608: 36tt x 8 nodevals x 16 models 
 
@@ -193,4 +149,4 @@ fitforplot[, 23][is.na(fitforplot[, 23])] <- FALSE
 
 ## ---------------------------------------------------------------------------------------------------------------
 
-save(fitforplot, file = here('Data', 'modelData', 'fit16ig.rda')) # Full is 8635. noActnoSelect fits best, at 8523
+save(fitforplot, file = here('Data', 'modelData', 'fit16k.rda')) # 

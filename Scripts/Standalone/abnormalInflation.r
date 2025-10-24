@@ -8,6 +8,7 @@ library(here)
 library(glmer)
 library(lmerTest)
 
+set.seed(12)
 
 load(here('Data', 'Data.Rdata')) # This is one big df, 'data', 2580, of 215 ppts
 
@@ -15,7 +16,7 @@ load(here('Data', 'Data.Rdata')) # This is one big df, 'data', 2580, of 215 ppts
 # Tag this with whether or not they selected the lower-probability variable (which is A in each case). 
 
 dfab <- data |>  # 92 obs of 22
-  filter(#pgroup %in%  c(1, 3),
+  filter(pgroup %in%  c(1, 3),
          trialtype %in%  c('c5', 'd7'),
          node3 %in%  c('A=1', 'B=1')) |> 
   ungroup()
@@ -77,10 +78,6 @@ lower_or <- exp(lower_logodds) # .337
 upper_or <- exp(upper_logodds) # 2.95
 
 # z -.004, p .901
-
-
-
-
 
 
 ## A new version

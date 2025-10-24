@@ -1,5 +1,5 @@
 ####################################################### 
-###### Collider - tidy up model predictions FULL  #####
+###### Collider - tidy up model predictions  #####
 #######################################################
 
 library(here)

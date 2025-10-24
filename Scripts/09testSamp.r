@@ -14,7 +14,7 @@ library(lmerTest)
 # - KNOWN
 # - VARIABLE?
 
-load(here('Data', 'modelData', 'matchedBypptig.rda')) # loads merged 5160 of 14
+load(here('Data', 'modelData', 'matchedBypptk.rda')) # loads merged 5160 of 14
 
 # Reference level is the MODEL and participants are compared to that.
 # For each measure, the reference level is FALSE and TRUE is compared to that.
@@ -43,6 +43,16 @@ lower_or <- exp(lower_logodds) # .98
 upper_or <- exp(upper_logodds) # 1.24
 
 # z 1.6 .11 NO RESULT
+
+# What if we split by group?
+# Actually unlikely to matter
+
+
+
+
+
+
+
 
 # ------------- Test for ACTUAL  --------------
 # Participants select Actual causes more often than the model

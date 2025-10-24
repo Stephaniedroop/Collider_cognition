@@ -13,7 +13,7 @@ load(here('Data', 'Data.Rdata')) # This is one big df, 2580, of 215 ppts
 byppt <- data |> 
   select(subject_id, trial_id, node3)
 
-load(here('Data', 'ModelData', 'fitforplot16ig.rda')) # df, 288 of 35
+load(here('Data', 'ModelData', 'fitforplot16k.rda')) # df, 288 of 35
 
 
 ppts <- merge(byppt, df, by = c('trial_id', 'node3'))

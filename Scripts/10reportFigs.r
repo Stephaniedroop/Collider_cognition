@@ -13,7 +13,7 @@ library(ggplot2)
 
 
 source(here('Scripts', 'plotUtils.R')) # Functions for plotting to compare model and ppts, using ggplot
-load(here('Data', 'modelData', 'fitforplot16ig.rda')) # 288 of 35
+load(here('Data', 'modelData', 'fitforplot16k.rda')) # 288 of 35
 #df <- fitforplot
 pgroups <- levels(df$pgroup)
 
@@ -29,70 +29,42 @@ pgroups <- levels(df$pgroup)
 # Usage
 # Instead, call a single model and pgroup plot like this for example full model for pgroup3:
   
-plotf <- plot_model_pgroup('full', 'A=.1,Au=.7,B=.8,Bu=.5', df)
-print(plotf)
+plotna3 <- plot_model_pgroup('noAct', 'A=.1,Au=.7,B=.8,Bu=.5', df)
+print(plotna3)
 
 ggsave(
-  filename = "full3ig.pdf",
-  plot = plotf,
+  filename = "noAct3.pdf",
+  plot = plotna3,
   path = here("Other", "Plots"),
   width = 12,
   height = 6,
   units = "in"
 )
 
-# Another example of the model plot, this time for model noSelect:
-  
-plotns <- plot_model_pgroup('noSelect', 'A=.1,Au=.7,B=.8,Bu=.5', df)
-print(plotns)
+# Best fitting model for other pgroups:
+
+plotna2 <- plot_model_pgroup('noAct', 'A=.5,Au=.1,B=.5,Bu=.8', df)
+print(plotna2)
 
 ggsave(
-  filename = "ns3.pdf",
-  plot = plotns,
+  filename = "noAct2.pdf",
+  plot = plotna2,
   path = here("Other", "Plots"),
   width = 12,
   height = 6,
   units = "in"
 )
 
-# Usage of no model just ppts
-#plot1 <- plot_nomodel_pgroup("A=.1,Au=.5,B=.8,Bu=.5", df)
-#plot2 <- plot_nomodel_pgroup("A=.5,Au=.1,B=.5,Bu=.8", df)
-#plot3 <- plot_nomodel_pgroup('A=.1,Au=.7,B=.8,Bu=.5', df)
-
-
-# Usage: compare full and noSelect 
-
-p4 <- plot_two_models_pgroup('full', 'noSelect', 'A=.1,Au=.5,B=.8,Bu=.5', df) #1
-p4
+plotna1 <- plot_model_pgroup('noAct', 'A=.1,Au=.5,B=.8,Bu=.5', df)
+print(plotna1)
 
 ggsave(
-  filename = "compfullns1.pdf",
-  plot = p4,
+  filename = "noAct1.pdf",
+  plot = plotna1,
   path = here("Other", "Plots"),
   width = 12,
   height = 6,
   units = "in"
 )
 
-p5 <- plot_two_models_pgroup('full', 'noSelect', 'A=.5,Au=.1,B=.5,Bu=.8', df) #2
 
-ggsave(
-  filename = "compfullns2.pdf",
-  plot = p5,
-  path = here("Other", "Plots"),
-  width = 12,
-  height = 6,
-  units = "in"
-)
-
-p6 <- plot_two_models_pgroup('full', 'noSelect', 'A=.1,Au=.7,B=.8,Bu=.5', df) #3
-
-ggsave(
-  filename = "compfullns3.pdf",
-  plot = p6,
-  path = here("Other", "Plots"),
-  width = 12,
-  height = 6,
-  units = "in"
-)
