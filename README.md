@@ -9,7 +9,7 @@
 
 ## Languages
 
-All scripts are in R, v.4.1. Packages needed: tidyverse, lme4, lmerTest, stringr, ggnewscale, RColorBrewer
+All scripts are in R, v.4.1. Packages needed are below with citations. 
 
 ## How to run
 
@@ -75,14 +75,69 @@ Participant data from the behavioural experiment.
 Some everyday words have a special sense in this project.
 
 - `world` - a setting of observed node variables A and B, and outcome E set by deterministic structural equations. A single iteration of how things started off and turned out. Each node can take 0 or 1. Sometimes represented by the values of A,B,E in order, eg. 110 means A=1, B=1, E=0, ie. that A and B both happened and the effect didn't.
-- #TO DO
 
-## What is a Collider and why is it important?
+## Package citations
 
-# TO DO CHANGE
+*ellmer* **light use!**
+Wickham H, Cheng J, Jacobs A, Aden-Buie G, Schloerke B (2025). _ellmer: Chat with Large Language
+  Models_. R package version 0.3.2, <https://CRAN.R-project.org/package=ellmer>.
 
-A collider is a causal structure where multiple possible causes can cause an effect, E. It can be either conjunctive (A _and_ B needed for E) or disjunctive (A _or_ B needed for E). It seems that when several things can potentially cause an outcome, and people want to decide what specifically caused it _this time_, they pick the thing that reliably occurs at the same time as the effect.
+*gander* **light use!**
+Couch S (2025). _gander: High Performance, Low Friction Large Language Model Chat_. R package version
+  0.1.0, <https://CRAN.R-project.org/package=gander>.
 
-But the world is messy and things don't stay the same for long enough to really count everything up. We often have to explain events without having had the luxury of running a proper randomised controlled experiment. Somehow we all do manage to do this, and well enough not to notice how remarkable it is! One theory of how we do this is that our minds simulate `counterfactuals`, (aka other ways things could have turned out), under the hood, under our conscious awareness. Under this theory, we imagine other similar situations, and we decide something is a cause when it robustly correlates with the effect even as everything around shifts and changes. This is elegantly modelled in Quillien's `counterfactual effect size model`, which went a step further than the other existing accounts like Lewis `direct dependency` (where literally everything else has to stay the same to calculate a cause's strength, ie. it only goes 'one layer deep') and Icard/Morris necessity-sufficiency model. Quillien's model 'jiggles', 'flips' or 'resamples' all the variables just like things vary in real life, and then calculates how invariant the cause is across these counterfactuals.
+*ggnewscale*
+Campitelli E (2024). _ggnewscale: Multiple Fill and Colour Scales in 'ggplot2'_. R package version
+  0.5.0, <https://CRAN.R-project.org/package=ggnewscale>.
 
-However elegant this model is, it can't be the whole story. The causal score it allocates is only based on base rate or probability, whereas people are more sensitive to the structure they see in the world. It seems we naturally gravitate to causes that are more informative. THat's what this project is about, to model how we do that.
+*ggplot2*
+H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+*here*
+Müller K (2025). _here: A Simpler Way to Find Your Files_. R package version 1.0.2,
+  <https://CRAN.R-project.org/package=here>.
+
+*knitr*
+Xie Y (2023). _knitr: A General-Purpose Package for Dynamic Report Generation in R_. R package version
+  1.45, <https://yihui.org/knitr/>.
+
+*lme4*
+Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear Mixed-Effects Models
+  Using lme4. Journal of Statistical Software, 67(1), 1-48. doi:10.18637/jss.v067.i01.
+  
+*lmerTest*
+Kuznetsova A, Brockhoff PB, Christensen RHB (2017). “lmerTest Package: Tests in Linear Mixed Effects
+  Models.” _Journal of Statistical Software_, *82*(13), 1-26. doi:10.18637/jss.v082.i13
+  <https://doi.org/10.18637/jss.v082.i13>.
+  
+*RColorBrewer*
+Neuwirth E (2022). _RColorBrewer: ColorBrewer Palettes_. R package version 1.1-3,
+  <https://CRAN.R-project.org/package=RColorBrewer>.
+  
+*renv*
+Ushey K, Wickham H (2025). _renv: Project Environments_. R package version 1.1.5,
+  <https://CRAN.R-project.org/package=renv>.
+  
+*rjson*
+Couture-Beil A (2024). _rjson: JSON for R_. R package version 0.2.23,
+  <https://CRAN.R-project.org/package=rjson>.
+  
+*rmarkdown*
+Allaire J, Xie Y, Dervieux C, McPherson J, Luraschi J, Ushey K, Atkins A, Wickham H, Cheng J, Chang W,
+  Iannone R (2024). _rmarkdown: Dynamic Documents for R_. R package version 2.29,
+  <https://github.com/rstudio/rmarkdown>.
+  
+*stringr*
+Wickham H (2023). _stringr: Simple, Consistent Wrappers for Common String Operations_. R package version
+  1.5.1, <https://CRAN.R-project.org/package=stringr>.
+  
+*tidyverse*
+Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J,
+  Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K,
+  Vaughan D, Wilke C, Woo K, Yutani H (2019). “Welcome to the tidyverse.” _Journal of Open Source
+  Software_, *4*(43), 1686. doi:10.21105/joss.01686 <https://doi.org/10.21105/joss.01686>.
+  
+*xtable*
+Dahl D, Scott D, Roosen C, Magnusson A, Swinton J (2019). _xtable: Export Tables to LaTeX or HTML_. R
+  package version 1.8-4, <https://CRAN.R-project.org/package=xtable>.
+  
