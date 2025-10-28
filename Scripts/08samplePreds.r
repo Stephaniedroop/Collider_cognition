@@ -28,13 +28,13 @@ datfortest <- data |>
 
 # Likewise reduce the model df to just what we need
 justmp <- df |> 
-  select(trial_id, node3, noAct) # CHANGE HERE FOR THE BEST FITTING MODEL ------- FULL VS NOACT
+  select(trial_id, node3, full) # CHANGE HERE FOR THE BEST FITTING MODEL ------- FULL VS NOACT
 
 # 39x9 - just the FULL model, in wide form
 model_predictions_wide <- justmp |> 
   pivot_wider(
     names_from = node3,
-    values_from = noAct
+    values_from = full # AND HERE
   )
 
 # Next section samples a variable as explanation for each participant trial, 

@@ -255,7 +255,7 @@ df <- df |>
 df[df$Include == FALSE, 8:15] <- -Inf
 
 df$Actual[is.na(df$Actual)] <- FALSE
-#df[df$Actual == FALSE, c(8,11,14)] <- -Inf # Uncomment this line if you want to fully penalise actual causes
+df[df$Actual == FALSE, c(8,11,14)] <- -Inf # Uncomment this line if you want to fully penalise actual causes. Which we do!
 
 ## ---------------------------------------------------------------------------------------------------------------
 save(df, file = here('Data', 'modelData', 'modelAndDataUnfitig.rda'))

@@ -67,4 +67,40 @@ ggsave(
   units = "in"
 )
 
+# ----------- Compare full and noAct to see why it is better --------------
+
+pcomp1 <- plot_two_models_pgroup('full', 'noAct', 'A=.1,Au=.5,B=.8,Bu=.5', df) #1
+
+ggsave(
+  filename = "compfullna1.pdf",
+  plot = pcomp1,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+pcomp2 <- plot_two_models_pgroup('full', 'noAct', 'A=.5,Au=.1,B=.5,Bu=.8', df) #2
+
+ggsave(
+  filename = "compfullna2.pdf",
+  plot = pcomp2,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+pcomp3 <- plot_two_models_pgroup('full', 'noAct', 'A=.1,Au=.7,B=.8,Bu=.5', df) #3
+
+ggsave(
+  filename = "compfullna3.pdf",
+  plot = pcomp3,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+
 

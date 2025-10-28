@@ -13,9 +13,9 @@ load(here('Data', 'modelData', 'fitforplot16k.rda')) # 288 of 35
 source(here('Scripts', 'plotUtils.R')) 
 
 # Correlations for the very first model fit results
-cor.test(df$prop, df$full) # .88
+cor.test(df$prop, df$full) # .89
 cor.test(df$prop, df$noAct) # .88
-cor.test(df$prop, df$noSelect) # .906
+cor.test(df$prop, df$noSelect) # .84
 
 
 
