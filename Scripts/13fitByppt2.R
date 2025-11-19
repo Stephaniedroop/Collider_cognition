@@ -55,7 +55,7 @@ ppt_merges <- lapply(ppt_merges, function(dat) {
 })
 
 results_2par <- lapply(ppt_merges, function(dat) {
-  get_optimsation(model_names2, dat, operative = NO_KAPPA)
+  get_optimisation(model_names2, dat, operative = NO_KAPPA)
 })
 
 # Backing up - actually the baseline model needs a less stringent BIC because it has no parameters
@@ -73,9 +73,9 @@ test5 <- results_2par[[60]][[1]]$BIC[9] # -24.95 = 49.9 - it will be the same fo
 
 # Save results of both series
 save(
-  #results_2par,
+  results_2par,
   results_3par,
-  file = here('Data', 'modelData', 'individFits3par.rda')
+  file = here('Data', 'modelData', 'individFitsNNN.rda')
 )
 
 # Now unlist to access, then format and store the results
@@ -123,7 +123,6 @@ summary_table <- best_df |>
   summarise(participant_count = n(), .groups = "drop")
 
 print(sum(summary_table$participant_count)) # 215
-
 
 # What if this is no different from chance?
 # run a chisq test on this distribution of counts, against an equal distribution

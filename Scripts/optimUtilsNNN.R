@@ -36,6 +36,9 @@ model_names2 <- c(
 # OPERATIVE DEFINITIONS of 'operative part' (what differs between optimisation functions for kindness v no kindness - what used to be done using different series of functions)
 # =======================================
 
+# THIS WAS A HILARIOUSLY LONG AND CLUNKY VERSION AND STILL GAVE THE SAME ANSWERS AS THE ONE I WROTE BEFORE
+# TO DO - 1) PROFVIS ON ONE DF, 2) REPLACE VAPPLY NNLS WITH FOR LOOP AS BEFORE
+
 # WITHOUT kappa for models with noKind
 NO_KAPPA <- list(
   name = "no_kappa",

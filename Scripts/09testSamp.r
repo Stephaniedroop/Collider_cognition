@@ -13,7 +13,7 @@ library(lmerTest)
 # - KNOWN
 # - VARIABLE?
 
-# Do this once for [[[[[full_ig]]]]]] and once for [[[[[[full_known]]]]]
+# Load
 load(here('Data', 'modelData', 'matchedBypptf_ig.rda')) # loads merged 5160 of 14
 
 # Reference level is the MODEL and participants are compared to that.
@@ -23,7 +23,7 @@ load(here('Data', 'modelData', 'matchedBypptf_ig.rda')) # loads merged 5160 of 1
 
 # -------------- ig -----------------
 
-# chisq for just ppt answer proportions, are they differnet from expected? Total 5160
+# chisq for just ppt answer proportions, are they different from expected? Total 5160
 
 countObs <- merged |> # F: 2995, T: 2165, answer F 58.0% of the time
   group_by(Observed) |>

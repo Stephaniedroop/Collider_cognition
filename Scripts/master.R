@@ -16,7 +16,11 @@ set.seed(12)
 # ------------- 0. Source utils -------------
 source(here('Scripts', 'cesmUtils.R')) # Functions for running the cesm model
 source(here('Scripts', 'optimUtils.R')) # Functions for optimisation and likelihood calculation
+# see also optimUtilsNNN.R for chatGPT version that now works but is full of tests and error catching so is slow. Gets same results
 source(here('Scripts', 'plotUtils.R')) # Functions for plotting to compare model and ppts, using ggplot
+
+# NOTE - 19 NOV 2025 - in process of changing the old repetitive optimUtils to new optimUtilsNNN which can do both kappa and no kappa series in one go
+# But there is a bug in fitting the by-participant version - new one not ready out of the box yet
 
 #--------------- 1. Get ppt data from behavioural experiment  -------------------
 # (JavaScript for the experiment itself is in the folder Experiment.
@@ -36,9 +40,7 @@ source(here('Scripts', '04processPreds.R')) #  Also defines important values lik
 
 source(here('Scripts', '05getLesions.R')) # All other model modules apart from raw cesm scores
 source(here('Scripts', '06optimise.R')) # Uses `optimUtils.R` to fit models.
-# Has changed as of 2 Nov 2025 to fit all models in one go (ie both k series at the same time).
-# It used to be you had to manually change whether you wanted k to be ig or known, and then run the whole series with what you chose, to compre the 8 with your chosen k, adn the 8 without
-# PLots etc also generated from that. Now rethinking how to rerun with the all at once.
+# Has changed as of 19 Nov 2025 to fit models with k same time as models without - but still in process
 
 source(here('Scripts', '07processForPlot.R')) # Make model predictions use friendly for plotting
 
@@ -48,8 +50,9 @@ source(here('Scripts', '09testSamp.R')) # Test the matched sampled explanations 
 # The following reporting figs use the probdist style model predictions, not the matched sampled explanations, but they produce the same answers
 source(here('Scripts', '10reportFigs.R')) # Main plots on every trial at once. Uses `plotUtils` functions to compare models
 source(here('Scripts', '11reportFigs2.R')) # Other plots not using functions; aggregate and split plots
-source(here('Scripts', '12fitByppt.R')) # Best model fit by participant. Input: data.rda and fitforplot from processForplot
-source(here('Scripts', '13fitByppt2.R')) # Best actual model fit by participant. Input: data.rda and modelunfitig from 05getLesions
+source(here('Scripts', '12fitByppt.R')) # Best model fit by participant. Input: data.rda and fitforplot from processForplot OLD!!!!
+source(here('Scripts', '13fitByppt2.R')) # Best actual model fit by participant. Input: data.rda and modelunfitig from 05getLesions. To replace script 12 once it's all working
+# Outputs individfits.rda and saves tables for reporting
 
 # ------------- 4. Standalone analyses ------------
 source(here("Scripts", "Standalone", "demogs.R"))
