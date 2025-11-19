@@ -2,18 +2,15 @@
 ########### Generate plots and other reporting figs using functions ##############
 #################################################################################
 
-
 library(tidyverse)
 library(here)
-library(ggnewscale) 
+library(ggnewscale)
 library(RColorBrewer)
 library(ggplot2)
 
 
-
-
 source(here('Scripts', 'plotUtils.R')) # Functions for plotting to compare model and ppts, using ggplot
-load(here('Data', 'modelData', 'fitforplot16k.rda')) # 288 of 35
+load(here('Data', 'modelData', 'fitforplot16ig.rda')) # 288 of 35. Generated in script 07.
 #df <- fitforplot
 pgroups <- levels(df$pgroup)
 
@@ -28,7 +25,48 @@ pgroups <- levels(df$pgroup)
 
 # Usage
 # Instead, call a single model and pgroup plot like this for example full model for pgroup3:
-  
+
+# ------- full ------------
+
+# FIG 3 IN PAPER
+plotf3 <- plot_model_pgroup('full', 'A=.1,Au=.7,B=.8,Bu=.5', df)
+print(plotf3)
+
+ggsave(
+  filename = "fullig3.pdf", # FIG 3 IN PAPER
+  plot = plotf3,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+plotf2 <- plot_model_pgroup('full', "A=.5,Au=.1,B=.5,Bu=.8", df)
+#print(plotf2)
+
+ggsave(
+  filename = "fullig2.pdf",
+  plot = plotf2,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+plotf1 <- plot_model_pgroup('full', "A=.1,Au=.5,B=.8,Bu=.5", df)
+#print(plotf3)
+
+ggsave(
+  filename = "fullig1.pdf",
+  plot = plotf1,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+
+# ----------- noAct ------------
 plotna3 <- plot_model_pgroup('noAct', 'A=.1,Au=.7,B=.8,Bu=.5', df)
 print(plotna3)
 
@@ -67,18 +105,56 @@ ggsave(
   units = "in"
 )
 
-# ----------- Compare full and noAct to see why it is better --------------
 
-pcomp1 <- plot_two_models_pgroup('full', 'noAct', 'A=.1,Au=.5,B=.8,Bu=.5', df) #1
+# ------------- Compare full and noSelect - k=ig ---------------
+
+pcompfns3 <- plot_two_models_pgroup(
+  'full',
+  'noSelect',
+  'A=.1,Au=.7,B=.8,Bu=.5',
+  df
+) #3
 
 ggsave(
-  filename = "compfullna1.pdf",
-  plot = pcomp1,
+  filename = "compfullns3.pdf",
+  plot = pcompfns3,
   path = here("Other", "Plots"),
   width = 12,
   height = 6,
   units = "in"
 )
+
+# ----------- Same but no Kind - compare noKind and noKindnoSelect --------------
+
+pcompnkns3 <- plot_two_models_pgroup(
+  'noKind',
+  'noKindnoSelect',
+  'A=.1,Au=.7,B=.8,Bu=.5',
+  df
+) #3
+
+ggsave(
+  filename = "compnkns3.pdf",
+  plot = pcompnkns3,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+
+# ----------- Compare full and noAct to see why it is better (k=KNOWN) --------------
+
+# pcomp1 <- plot_two_models_pgroup('full', 'noAct', 'A=.1,Au=.5,B=.8,Bu=.5', df) #1
+#
+# ggsave(
+#   filename = "compfullna1.pdf",
+#   plot = pcomp1,
+#   path = here("Other", "Plots"),
+#   width = 12,
+#   height = 6,
+#   units = "in"
+# )
 
 pcomp2 <- plot_two_models_pgroup('full', 'noAct', 'A=.5,Au=.1,B=.5,Bu=.8', df) #2
 
@@ -102,5 +178,18 @@ ggsave(
   units = "in"
 )
 
-
-
+pcompnank <- plot_two_models_pgroup(
+  'noAct',
+  'noActnoKind',
+  'A=.1,Au=.7,B=.8,Bu=.5',
+  df
+)
+print(pcompnank)
+ggsave(
+  filename = "compnank3.pdf",
+  plot = pcompnank,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
