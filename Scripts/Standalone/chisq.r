@@ -75,9 +75,32 @@ df_p3 <- df |>
 
 trialnodes <- unique(df_p1$trial_node)
 
+# Merge these three dataframes on trial_node to make a 3-way composite for chisq tests
+fortest <- df_p1 |>
+  inner_join(df_p2, by = "trial_node", suffix = c("_1", "_2")) |>
+  inner_join(df_p3, by = "trial_node") |> #, suffix = ("_3")
+  rename(n1 = n_1, n2 = n_2, n3 = n) |>
+  select(n1, n2, n3)
+
+fortest_nonzero <- fortest[rowSums(fortest) > 0, ]
+
+omnibus <- chisq.test(fortest_nonzero) # X = 238.8, df = 186, p= .005411
+print(omnibus)
+
+
+# ------- EFFECT SIZE -------
+
+nom <- sum(fortest_nonzero) # 2580
+
+om <- sqrt(omnibus$statistic / (nom * 2)) # .304 medium effect size CRAMERS V INSTEAD OF OMEGA
+
+
+# ---------- PAIRWISE -------------
+
+# Earlier - before we worked out you can do a three-way chisq
 # Now make three new matrices for the chisq
 # ---------- 12 ----------
-df_12 <- df_p1 |>
+df_12 <- df_p1 |> # 96 rows each time
   inner_join(df_p2, by = "trial_node", suffix = c("_p1", "_p2")) |>
   select(n_p1, n_p2)
 

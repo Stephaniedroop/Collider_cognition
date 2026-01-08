@@ -5,7 +5,7 @@
 library(tidyverse)
 library(here)
 library(xtable)
-source(here('Scripts', 'optimUtilsNNN.R')) # functions to optimise
+source(here('Scripts', 'optimUtilsNNN4.R')) # functions to optimise
 
 set.seed(12)
 
@@ -23,13 +23,15 @@ load(here('Data', 'modelData', 'modelAndDataUnfitig.rda')) # df, 288 of 23
 # For old experiment it is 50/3408 = .0147
 # For new experiment it is 132/2580 = .0511 now it is 15.1 %???!!
 
+# A simple softmax before optimisation
+
 # -------------- Run the functions ------------------
 
 # Usage: FIRST FOR THE KAPPA SERIES, on the first series of model_names (listed in optimUtils)
 
 # Run the series of optimisation functions from the utils file
 results1 <- get_optimisation(model_names, df, operative = WITH_KAPPA)
-
+print(results1)
 
 # SECOND FOR THE NO-KAPPA SERIES
 
@@ -38,6 +40,7 @@ colnames(df)[8:16] <- model_names2
 
 # Run the series of optimisation functions from the utils file, on the second series of model_names
 results2 <- get_optimisation(model_names2, df, operative = NO_KAPPA)
+print(results2)
 # BIC did not need optimised - the params dont mean anything - replace manually in the table if need be
 
 # ---------- Format and save the results, series run in several blocks ----------

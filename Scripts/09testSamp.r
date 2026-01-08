@@ -21,27 +21,37 @@ load(here('Data', 'modelData', 'matchedBypptf_ig.rda')) # loads merged 5160 of 1
 
 # In ig, participants select Observed more often than model, and Known more often than model
 
+# The tag 'Known' should no longer apply to Observed vars.
+# If node3 starts with A= or B= then put FALSE in the column Known
+vals <- c("A=0", "A=1", "B=0", "B=1")
+
+# If node3 %in% vals, then Known = FALSE
+merged$Known[merged$Response %in% vals] <- FALSE
+
+
 # -------------- ig -----------------
 
-# chisq for just ppt answer proportions, are they different from expected? Total 5160
+# chisq for just ppt answer proportions, are they different from expected? Total 5160 NO - THIS IS THE PPT AND MODEL MERGED SO YOU CANT DO THIS
 
 countObs <- merged |> # F: 2995, T: 2165, answer F 58.0% of the time
+  filter(Respondent == "node3") |>
   group_by(Observed) |>
   summarise(n = n())
 
 chisq.test(countObs$n, p = c(0.5, 0.5)) # X-squared 133.51, df 1, p < 2.2e-16 ***
-
-countAct <- merged |> # F: 1186, T: 3974, answer T 77.0% of the time
-  group_by(Actual) |>
-  summarise(n = n())
-
-chisq.test(countAct$n, p = c(180 / 288, 108 / 288)) # 3437.7, 1, p < 2.2e-16 ***
-
-countKnown <- merged |> # F: 2247, T: 2913, answer T 56.5% of the time
-  group_by(Known) |>
-  summarise(n = n())
-
-chisq.test(countKnown$n, p = c(222 / 288, 66 / 288)) # 3285.3, df = 1, p-value < 2.2e-16 ***
+#
+# countAct <- merged |> # F: 1186, T: 3974, answer T 77.0% of the time
+#   group_by(Actual) |>
+#   summarise(n = n())
+#
+# chisq.test(countAct$n, p = c(180 / 288, 108 / 288)) # 3437.7, 1, p < 2.2e-16 ***
+#
+# countKnown <- merged |> # F: 2247, T: 2913, answer T 56.5% of the time
+#   filter(Respondent == "node3") |>
+#   group_by(Known) |>
+#   summarise(n = n())
+#
+# chisq.test(countKnown$n, p = ???????) # 3285.3, df = 1, p-value < 2.2e-16 *** c(222 / 288, 66 / 288)
 
 # ------------- Test for OBSERVED ig  --------------
 # It shows participants select OBSERVED more often than predicted by the model.
@@ -123,83 +133,3 @@ lower_or <- exp(lower_logodds) # 1.182
 upper_or <- exp(upper_logodds) # 1.52
 
 # z 4.579  p 4.68e-06 ***
-
-# -------------- Known  -----------------
-
-# ------------- Test for OBSERVED known --------------
-# It shows participants select OBSERVED more often than predicted by the model.
-# This is reported in the section `Unobserved vs observed variables` section.
-
-# Respondent is model 0; ppt 1. Observed is F/T
-predObs <- glmer(
-  Observed ~ Respondent + (1 | subject_id) + (1 | trial_id),
-  data = merged,
-  family = binomial(link = 'logit')
-)
-
-summary(predObs)
-
-coef <- fixef(predObs) # -.156
-
-est <- exp(coef) # .856 exp converts logodds to odds.
-
-se <- sqrt(diag(vcov(predObs)))
-
-lower_logodds <- coef - (1.96 * se)
-upper_logodds <- coef + (1.96 * se)
-
-lower_or <- exp(lower_logodds) # .761
-upper_or <- exp(upper_logodds) # .963
-
-# z -2.595 p 0.00947 **
-
-# ------------- Test for ACTUAL known  --------------
-# Participants select Actual causes more often than the model
-
-predAct <- glmer(
-  Actual ~ Respondent + (1 | subject_id) + (1 | trial_id),
-  data = merged,
-  family = binomial(link = 'logit')
-)
-
-summary(predAct)
-
-coef <- fixef(predAct) #
-
-est <- exp(coef)
-
-se <- sqrt(diag(vcov(predAct)))
-
-lower_logodds <- coef - (1.96 * se)
-upper_logodds <- coef + (1.96 * se)
-
-lower_or <- exp(lower_logodds) #
-upper_or <- exp(upper_logodds) #
-
-#  ns
-
-# ------------ Test for KNOWN known -------------
-
-# Participants select Known causes more often than the model in the ig one, because known is not modelled
-
-predKn <- glmer(
-  Known ~ Respondent + (1 | subject_id) + (1 | trial_id),
-  data = merged,
-  family = binomial(link = 'logit')
-)
-
-summary(predKn)
-
-coef <- fixef(predKn) #
-
-est <- exp(coef) #
-
-se <- sqrt(diag(vcov(predKn)))
-
-lower_logodds <- coef - (1.96 * se)
-upper_logodds <- coef + (1.96 * se)
-
-lower_or <- exp(lower_logodds) #
-upper_or <- exp(upper_logodds) #
-
-# ns

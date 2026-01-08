@@ -62,10 +62,10 @@ world_combos <- function(params, structure) {
   # Then we want to merge this back in to the df
   test <- merge(x = result, y = df, by = c('A', 'B', 'Au', 'Bu'))
 
-  # Calculate posterior. Some are incoherent but will be removed later
+  # Calculate posterior. This is Eq.3 (the first 'p_alpha' multiplier in the general or specific section of paper)
   df1 <- test |>
     group_by(A, B, E.y, E.x) |>
-    mutate(posterior = PrUn / sum(PrUn)) |> #groupPost = cur_group_id()
+    mutate(posterior = PrUn / sum(PrUn)) |>
     ungroup()
 
   # Now set the impossible ones to 0

@@ -10,16 +10,15 @@ library(ggplot2)
 
 
 load(here('Data', 'modelData', 'fitforplot25.rda')) # 288 of 43. Pre 3 Nov: 288 of 35 fitforplot16k.rda
+# These are the same models but with an extra series called '_Known' that we didn't end up using. So, if it ends in '_ig' it is equivalent to using KIndnes, and if it ends in '_none' that is the no K series
 source(here('Scripts', 'plotUtils.R'))
 
-# Correlations for the very first model fit results
-cor.test(df$prop, df$full_ig) # .860
-cor.test(df$prop, df$noAct_ig) # .807
-cor.test(df$prop, df$noSelect_ig) # .905
+# The tag 'Known' should no longer apply to Observed vars.
+# If node3 starts with A= or B= then put FALSE in the column Known
+vals <- c("A=0", "A=1", "B=0", "B=1")
 
-cor.test(df$prop, df$full_known) # .845
-cor.test(df$prop, df$noAct_known) # .832
-cor.test(df$prop, df$noSelect_known) # .836
+# If node3 %in% vals, then Known = FALSE
+df$Known[df$node3 %in% vals] <- FALSE
 
 
 # ------------  Just 111, for compound decision AvB . Just pgroup 1, noKind -----------------
@@ -88,10 +87,12 @@ p111abf <- ggplot() +
   theme_bw() +
   theme(
     panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    axis.title = element_text(size = 18),
     axis.text.x = element_text(vjust = 0.5, hjust = 1),
     legend.margin = margin(c(0, 0, 0, 0)),
     axis.title.x = element_text(margin = margin(t = 1, r = 0, b = 0, l = 0)),
-    legend.text = element_text(size = 10), # here thats 'Full Model'
+    legend.text = element_text(size = 18), # here thats 'Full Model'
     legend.title = element_text(size = 10)
   ) # here 'Participants and variable'
 
@@ -102,12 +103,215 @@ ggsave(
   filename = "p111abnok.pdf",
   plot = p111abf,
   path = here("Other", "Plots"),
+  width = 6,
+  height = 6,
+  units = "in"
+)
+
+
+# ------------- A version of the previous, Fig.4 in papar, stacked bar chart but not combining A and Au -------------
+
+# ------------  Just 111, for compound decision AvB . Just pgroup 1, noKind -----------------
+
+# Add a column called node2 for whether node3 starts with A, Au, B or Bu
+df <- df |>
+  mutate(
+    node2 = case_when(
+      str_starts(node3, "A=") ~ "A",
+      str_starts(node3, "Au=") ~ "Au",
+      str_starts(node3, "B=") ~ "B",
+      str_starts(node3, "Bu=") ~ "Bu",
+      TRUE ~ NA_character_
+    )
+  )
+
+df6 <- df |>
+  filter(
+    trial_structure_type %in%
+      c("Conjunctive: A=1,B=1,E=1", "Disjunctive: A=1,B=1,E=1"),
+    pgroup == "A=.1,Au=.5,B=.8,Bu=.5"
+  ) |>
+  select(
+    trial_id,
+    pgroup,
+    full_none,
+    prop,
+    trial_structure_type,
+    Variable,
+    node2,
+    Actual,
+    SE
+  )
+
+# Summarize mean proportions by group (A, B)
+df_bar6 <- df6 |>
+  group_by(trial_structure_type, Variable, node2) |>
+  summarise(Participants = sum(prop), Model = sum(full_none), .groups = 'drop')
+
+# Summarize SE separately for error bars
+df_error6 <- df6 |>
+  group_by(trial_structure_type, Variable, node2) |>
+  summarise(
+    mean_prop = sum(prop),
+    se = sqrt(sum(SE^2)), # Example assuming independence; adapt based on your data
+    .groups = 'drop'
+  )
+
+p111abf6 <- ggplot() +
+  geom_col(
+    data = df_bar6,
+    aes(x = Variable, y = Participants, fill = node2),
+    position = position_stack()
+  ) +
+  # geom_errorbar(
+  #   data = df_error6,
+  #   aes(x = Variable, ymin = mean_prop - se, ymax = mean_prop + se),
+  #   width = 0.2,
+  #   position = position_dodge(.9)
+  # ) +
+  scale_fill_brewer(palette = "Accent", name = "Participants \nand variable") +
+  guides(fill = guide_legend(override.aes = list(shape = NA))) +
+  # geom_point(
+  #   data = df_bar6,
+  #   aes(x = Variable, y = Model, shape = "Model", color = "Model"),
+  #   size = 3,
+  #   position = position_dodge(.9),
+  #   show.legend = TRUE
+  # ) +
+  scale_shape_manual(name = "", values = c("Model" = 16)) +
+  scale_color_manual(name = "", values = c("Model" = "blue")) +
+  labs(
+    x = 'Response',
+    y = 'Proportion/Prediction',
+    title = 'A=.1,Au=.5,B=.8,Bu=.5'
+  ) + #'
+  facet_wrap(~trial_structure_type) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    axis.title = element_text(size = 18),
+    axis.text.x = element_text(vjust = 0.5, hjust = 1),
+    legend.margin = margin(c(0, 0, 0, 0)),
+    axis.title.x = element_text(margin = margin(t = 1, r = 0, b = 0, l = 0)),
+    legend.text = element_text(size = 18), # here thats 'Full Model'
+    legend.title = element_text(size = 10)
+  ) # here 'Participants and variable'
+
+
+# axis.text = element_text(size = 14),
+#axis.title = element_text(size = 18),
+
+# chat GPT version
+
+# my_colors <- c(
+#   "A"  = brewer.pal(9, "Blues")[4],
+#   "Au" = brewer.pal(9, "Blues")[7],
+#   "B"  = brewer.pal(9, "Purples")[4],
+#   "Bu" = brewer.pal(9, "Purples")[7]
+# )
+
+my_colors <- c(
+  "A" = brewer.pal(9, "Oranges")[4],
+  "Au" = brewer.pal(9, "Oranges")[7],
+  "B" = brewer.pal(9, "Greens")[4],
+  "Bu" = brewer.pal(9, "Greens")[7]
+)
+
+
+# Summaries for stacked bars (unchanged)
+df_bar6 <- df6 |>
+  group_by(trial_structure_type, Variable, node2) |>
+  summarise(Participants = sum(prop), Model = sum(full_none), .groups = 'drop')
+
+# NEW: Total summary for placing error bars
+df_error6_total <- df6 |>
+  group_by(trial_structure_type, Variable) |>
+  summarise(
+    mean_prop = sum(prop),
+    se = sqrt(sum(SE^2)),
+    .groups = "drop"
+  )
+
+# NEW: Total summary for model dots
+df_model6_total <- df6 |>
+  group_by(trial_structure_type, Variable) |>
+  summarise(
+    Model = sum(full_none),
+    .groups = "drop"
+  )
+
+
+p111abf6 <- ggplot() +
+  geom_col(
+    data = df_bar6,
+    aes(x = Variable, y = Participants, fill = node2),
+    position = position_stack()
+  ) +
+
+  # ---- ERROR BARS (total response) ----
+  geom_errorbar(
+    data = df_error6_total,
+    aes(
+      x = Variable,
+      ymin = mean_prop - se,
+      ymax = mean_prop + se
+    ),
+    width = 0.25,
+    size = 0.8
+  ) +
+
+  # ---- MODEL DOTS (total prediction) ----
+  geom_point(
+    data = df_model6_total,
+    aes(
+      x = Variable,
+      y = Model,
+      shape = "Model",
+      color = "Model"
+    ),
+    size = 5
+  ) +
+  scale_fill_manual(values = my_colors, name = "Participants \nand variable") +
+  #scale_fill_brewer(palette = "Spectral", name = "Participants \nand variable") +
+  scale_shape_manual(name = "", values = c("Model" = 16)) +
+  scale_color_manual(name = "", values = c("Model" = "blue")) +
+
+  labs(
+    x = 'Response',
+    y = 'Proportion/Prediction',
+    title = 'A=.1,Au=.5,B=.8,Bu=.5'
+  ) +
+
+  facet_wrap(~trial_structure_type) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    axis.title = element_text(size = 18),
+    axis.text.x = element_text(vjust = 0.5, hjust = 1),
+    legend.margin = margin(c(0, 0, 0, 0)),
+    axis.title.x = element_text(margin = margin(t = 1)),
+    legend.text = element_text(size = 18),
+    legend.title = element_text(size = 10)
+  )
+
+
+print(p111abf6)
+
+ggsave(
+  filename = "p111abnokst.pdf",
+  plot = p111abf6,
+  path = here("Other", "Plots"),
   width = 12,
   height = 6,
   units = "in"
 )
 
-# -------- Now redoing all these plots from the older iteration of paper, had cut bbut gone back ------
+
+# -------- THEORY PLOTS FOR FIGURE 8 - OBSERVED, KNOWN, ACTUAL ------
+
+# try scale_fill_manual(values = c("Yes" = "#66c2a5", "No" = "#fc8d62")) + after scale fill brewer line
 
 # --------- ig model, KNOWN, FULL ----------
 
@@ -143,7 +347,8 @@ pknown <- ggplot(summary_df0, aes(x = key, y = val, fill = Known)) +
     position = position_dodge(0.9)
   ) +
   labs(x = "Response", y = "Proportion/Prediction", fill = "Known status") +
-  scale_fill_brewer(palette = "Set2") + #, labels = c("", "")
+  scale_fill_brewer(palette = "Set2") + #, labels = c("", "") +
+  scale_fill_manual(values = c("TRUE" = "#66c2a5", "FALSE" = "#fc8d62")) +
   theme_bw() +
   theme(
     panel.grid = element_blank(),
@@ -170,6 +375,7 @@ pknown <- ggplot(summary_df0, aes(x = key, y = val, fill = Known)) +
   ) +
   labs(x = "Response", y = "Proportion/Prediction", fill = "Known") +
   scale_fill_brewer(palette = "Set2") +
+  scale_fill_manual(values = c("TRUE" = "#66c2a5", "FALSE" = "#fc8d62")) +
   theme_bw() +
   theme(
     panel.grid = element_blank(),
@@ -190,6 +396,8 @@ ggsave(
 
 
 # --------- model ig OBSERVED, FULL ----------
+
+# NOT IMPORATNT NOW - NO DIFFERENCE
 
 # Repeat just the observed v unobs for the full model just in case it's needed,
 # although it gives the same results as noKind, because k is so small in the best fitting models
@@ -237,6 +445,7 @@ punf <- ggplot(summary_dff, aes(x = key, y = val, fill = Observed)) +
   ) +
   labs(x = "Response", y = "Proportion/Prediction", fill = "Observed") +
   scale_fill_brewer(palette = "Set2") + #, labels = c("Unobserved \n(Au|Bu)", "Observed \n(A|B)")
+  scale_fill_manual(values = c("TRUE" = "#66c2a5", "FALSE" = "#fc8d62")) +
   #scale_fill_discrete(labels = c("Observed \n(A|B)", "Unobserved \n(Au|Bu)")) +
   theme_bw() +
   theme(
@@ -294,6 +503,7 @@ punA <- ggplot(summary_dfA, aes(x = key, y = val, fill = Actual)) +
   #annotate("text", x = 1.5, y = max(summary_dfA$val + summary_dfA$se) + 0.05, hjust = 0.5, vjust = 0.5, size = 5) + #label = "***"
   labs(x = "Response", y = "Proportion/Prediction", fill = "Actual") +
   scale_fill_brewer(palette = "Set2") + #, labels = c("Unobserved \n(Au|Bu", "Observed \n(A|B)")
+  scale_fill_manual(values = c("TRUE" = "#66c2a5", "FALSE" = "#fc8d62")) +
   #scale_fill_discrete(labels = c("Observed \n(A|B)", "Unobserved \n(Au|Bu)")) +
   theme_bw() +
   theme(

@@ -72,12 +72,20 @@ plot_model_pgroup <- function(model_colname, pgroup_label, df) {
     theme_bw() +
     theme(
       panel.grid = element_blank(),
+      axis.text = element_text(size = 14),
+      axis.title = element_text(size = 18),
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
       legend.margin = margin(c(0, 0, 0, 0)),
       axis.title.x = element_text(margin = margin(t = 1, r = 0, b = 0, l = 0)),
       plot.title = element_text(size = 18, face = "bold", hjust = 0.5)
     )
 }
+
+# +
+#   theme(
+#     axis.text = element_text(size = 14),
+#     axis.title = element_text(size = 18)
+#   )
 
 # Specific for Neil stanford talk to plot only model no participants
 plot_nomodel_pgroup <- function(pgroup_label, df) {
@@ -167,19 +175,21 @@ plot_two_models_pgroup <- function(model1, model2, pgroup_label, df) {
     facet_wrap(~trial_structure_type, ncol = 6) +
     labs(
       x = 'Response',
-      y = 'Proportion/Prediction',
-      title = sprintf(
-        "Models %s (black) & %s (red) at  %s",
-        model1,
-        model2,
-        pgroup_label
-      )
+      y = 'Proportion/Prediction'
+      # title = sprintf(
+      #   "Models %s (black) & %s (red) at  %s",
+      #   model1,
+      #   model2,
+      #   pgroup_label
+      # )
     ) +
     scale_fill_brewer(palette = "Set2") + #, labels = c("Observed \n(A|B)", "Unobserved \n(Au|Bu)")) +
     scale_colour_manual(values = c('gray', 'black')) +
     theme_bw() +
     theme(
       panel.grid = element_blank(),
+      axis.text = element_text(size = 14),
+      axis.title = element_text(size = 18),
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
       legend.margin = margin(c(0, 0, 0, 0)),
       axis.title.x = element_text(margin = margin(t = 1, r = 0, b = 0, l = 0)),

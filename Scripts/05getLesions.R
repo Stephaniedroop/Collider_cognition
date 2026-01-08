@@ -47,6 +47,11 @@ noAct <- mp |> #2
   group_by(pgroup, trialtype, node3, .drop = F) |>
   summarise(noAct = sum(cesm * posterior))
 
+# Test noSelect
+noSelect_test <- mp |>
+  group_by(pgroup, trialtype, node3, .drop = F) |>
+  summarise(noSelect_test = sum(Actual * posterior))
+
 
 # -------- Next, lesion Inference  ------------
 
@@ -317,8 +322,7 @@ df <- df |>
 df[df$Include == FALSE, 8:15] <- -Inf
 
 df$Actual[is.na(df$Actual)] <- FALSE
-df[df$Actual == FALSE, c(8, 11, 14)] <- -Inf # Uncomment this line if you want to fully penalise actual causes. Which we do!
-
+df[df$Actual == FALSE, c(8, 10, 11, 14)] <- -Inf # Make sure noInf is included
 # Put basseline with models to include it in fits later
 df <- df |>
   relocate(baseline, .before = Actual)
