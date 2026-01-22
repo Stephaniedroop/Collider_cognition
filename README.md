@@ -23,42 +23,60 @@ All scripts are in R, v.4.1. Packages needed are below with citations.
 
 - `master.R` - top level analysis script. **Go here first**
 
-It will first source a few scripts holding static utilities: 
-- `cesmUtils.R` - functions to run the CESM model
-- `optimUtils.R` - functions to fit and optimise models
-- `plotUtils.R` - functions to generate plots
 
-The masterscript sources scripts in the following order:
+library(tidyverse)
+#library(rjson)
+library(ggnewscale)
+library(here)
+library(RColorBrewer)
+library(ggplot2)
+library(lme4)
+library(lmerTest)
 
-a) Processing behavioural experiment data (see folder `Other/hostExperiment` for the JS code of experiment):
+set.seed(12)
 
-- `01preprocess.R` - Get the participants' behavioural experiment data ready. Saves as `Data.Rdata` in folder `Data`
+# ------------- 0. Source utils -------------
+source(here('Scripts', 'cesmUtils.R')) # Functions for running the cesm model - used in 03
+source(here('Scripts', 'optimUtils4par.R')) # Functions for modelling likelihood calculation - used in 06
+source(here('Scripts', 'modelNames.R')) # Static lists with model characteristics - used in 05
+source(here('Scripts', 'plotUtils.R')) # Functions for plotting to compare model and ppts used in 10, 11
 
-2. Set up Collider worlds (see note on worlds below) and get CESM (Quillien+Lucas23) model predictions for those for the _causal selection_ part of the model:
 
-_Btw in the middle of a reconstruction of files and names at 21 Sept 2025_
+#--------------- 1. Get ppt data from behavioural experiment  -------------------
+\\ (JavaScript for the experiment itself is in the folder Experiment.
+\\ For each participant a csv was saved on the server and then transferred out of there into Data)
+\\ Demographics are in the `preprocessing` script too.
+source(here('Scripts', '01preprocess.R')) # Collates individual csvs, reconciles with prolific report, saves `Data.Rdata` and also `ppts.csv`
 
-- `02setParams.R` - short script to set the manipulated probabilities of the variables
-- `03getPreds.R` - get CESM model predictions. Output `all.rda`
-- `04processPreds.R` - put model predictions in a user-friendly format, renames variables, splits out node values 0 and 1. Input: `all.rda`, output `modelproc.rda`
+#-------------- 2. Create parameters, run cesm, get model predictions and save them ------------
+source(here('Scripts', '02setParams.R')) # The baserates of the causal model
+source(here('Scripts', '03getPreds.R')) # Gets cesm model predictions using `cesmUtils.R`.
 
-3. Other modelling
+# Process model predictions to be more user friendly: take average of 10 model runs, wrangles and renames variables, splits out node values 0 and 1
+source(here('Scripts', '04processPreds.R')) # Also sets a column of 1s and tags like Actual for the lesions
 
-- `05getLesions.R` calculates the _inference_, _computational kindness_ and _actual causality_ parts of the full models, then progressively lesions. Input `modelproc.rda` and `Data.rdata`, output `modelAndDataUnfit.rda`
-- `06optimise.Rmd` fits and optimises models. Input `modelAndDataUnfit.rda`, output `fit16mpn.csv`.
-- `07processForPlot.Rmd` - an intermediate file for the clumsy relabelling, to stop the actual plotting file getting unwieldy. Input: `fit16mpn.csv`; output `fitforplot16mpn.csv`
-- `08samplePreds.Rmd` - get an actual sample from model for each participant trial. Input: `Data.Rdata` and `fitforplot16mpn.csv`, output: a glmer result in the console and reported in the Unobserved variables section of the paper and `forplotbyppt.csv`. (TO DO: should this not be used for the freestanding analyses scripts too)
-- `09testSamp.R` - Test the matched sampled explanations against participants for our theory metrics
-- `10reportFigs.R` generates plots on a pattern with functions from `plotUtils.R`. Most are 'nice to have' and not reported. Input `fitforplot16mpn`, output figures saved in folder `Other`, `Plots`. _TO DO_: 1) add code to save plots as .png too for wider comms.
-- `11reportFigs2.R` individual plots using customised calls, for reporting.
-- `12fitByppt.R` how many ppts are best fit by each model. Input `Data.Rdata` and `fitforplot16mpn`. Output: table of results in the console
+# -------------3. Results: fit model, compare predictions, plot etc -----------------
 
-4. Free-standing analyses for reporting
+source(here('Scripts', '05optimise.R')) # Uses `optimUtils4par.R` to fit models.
+source(here('Scripts', '06processForPlot.R')) # Make model predictions use friendly for plotting
 
-- `coverTest.Rmd` - Freestanding analysis to check if cover story affects answers (it doesn't - except lightly in 2/36 conditions, due to noise)
-- `demogs.R` - demographics on participant behavioural data
-- `abnormalInflation.Rmd` - check for presence of abnormal inflation and deflation (documented behavioural phenomena of causal selection) are found in our data, which would be support for causal selection theory. [Preliminary analysis finds no evidence, unlike in the cogsci paper]. Input `Data.Rdata`, output: table of results in the console.
-- `chisq.r` - check whether participants answer non-uniformly in each world. Input `modelAndDataUnfitpn.csv`, output: table of results in the console.
+source(here('Scripts', '07reportFigs.R')) # Main plots on every trial at once. Uses `plotUtils` functions to compare models
+source(here('Scripts', '08reportFigs2.R')) # Other plots not using functions; aggregate and split plots
+
+source(here('Scripts', '09fitByppt.R')) # Best model fit by participant. Input: data.rda
+source(here('Scripts', '10presentByppt.R')) # chisq tests and component bar plot
+
+
+# ------------- 4. Standalone analyses ------------
+source(here("Scripts", "Standalone", "demogs.R"))
+source(here("Scripts", "Standalone", "chisq.R")) # Uses the `unfitmodelpredictions` data but only to get grouped ppt numbers. Doesn't vary with different models
+source(here("Scripts", "Standalone", "abnormalInflation.R")) # Tests for overall presence of the effect seen in the plot of the 111 conditions by pgroup and structure - doesn't find any because it's only seen in pgroup 1
+
+# Check if cover story affects answers (it doesn't - except in 2/36 conditions due to noise)
+rmarkdown::render(
+  input = here("Scripts", "Standalone", "coverTest.Rmd"),
+  output_file = here("Other", "Reports", "coverTest.html")
+)
 
 
 
@@ -70,11 +88,7 @@ Holds the Javascript and html to run the behavioural experiment, which is an onl
 
 Participant data from the behavioural experiment.
 
-## Glossary
 
-Some everyday words have a special sense in this project.
-
-- `world` - a setting of observed node variables A and B, and outcome E set by deterministic structural equations. A single iteration of how things started off and turned out. Each node can take 0 or 1. Sometimes represented by the values of A,B,E in order, eg. 110 means A=1, B=1, E=0, ie. that A and B both happened and the effect didn't.
 
 ## Package citations
 

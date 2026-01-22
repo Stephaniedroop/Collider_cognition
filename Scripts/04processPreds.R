@@ -10,6 +10,7 @@ library(tidyverse)
 # To make the full model and all the lesioned version, run this preprocessing step and then combine in '06getLesions'
 
 load(here('Data', 'modelData', 'all.rda')) # 1440
+load(here('Data', 'Data.rdata')) # loads data 2580 obs of 23 - used further down the script
 
 all$pgroup <- as.factor(all$pgroup)
 all$structure <- as.factor(all$structure)
@@ -106,24 +107,144 @@ all$uAuB <- as.factor(all$uAuB)
 # d6: 110
 # d7: 111
 
-# ---------- Deduction and inference
-
-# Sometimes the values of the unobserved variables can be inferred logically. >>> deduction.
-# Sometimes we don't know what values the unobserved variables take >>> inference
-
-# All unobserved are realLatent for inference, except the following which can be deduced:
-
-# c5: Au and Bu >> must both be 1
-# d2: Bu >> 0
-# d3: Bu >> 1
-# d4: Au >> 0
-# d5: Au >> 1
-# d6: Au and Bu >> both 0
-# Actually this in the data processing script, so will be combined later
-
-# Finally rename to be consistent later
+# Rename to be consistent later
 
 mp <- all
 
+# Add column of 1s called noSelect
+mp$noSelect <- 1
+
+# Allocate a cause as Actual when it fulfils either of two conditions:
+#  1) it equals the Effect
+#  2) unobserved variable can only follow main variable
+
+# Condition 1 - direct match - definitely use. This works if Actual is applied after the sofmax but before the Inference
+# But Neil's whiteboard photo says to do the inference etc before applying the Actual coding. Not sure how to do it
+# mp <- mp |> #
+#   mutate(
+#     Actual = case_when(
+#       node2 == 'A' ~ A == E.x,
+#       node2 == 'B' ~ B == E.x,
+#       node2 == 'Au' ~ Au == E.x,
+#       node2 == 'Bu' ~ Bu == E.x
+#     )
+#   )
+
+# Condition 2 - many of these are already caught but just to catch the extras DO NOT USE - or if you do want to use, then finish it
+# mp$Actual[mp$A == '0' & mp$E == '1' & mp$node3 == 'Au=1'] <- FALSE
+# mp$Actual[mp$B == '0' & mp$E == '1' & mp$node3 == 'Bu=1'] <- FALSE
+# mp$Actual[mp$B == '0' & mp$node3 == 'Bu=1'] <- FALSE
+# mp$Actual[mp$B == '0' & mp$node3 == 'Bu=1'] <- FALSE
+
+# Get values of Actual for each combination of pgroup, trialtype, node3 - NEED A BETTER PLACE TO SAVE THE ACTUAL
+# Actual <- mp |>
+#   group_by(pgroup, trialtype, node3) |>
+#   summarise(Actual = first(Actual), .groups = "drop")
+
+# ------- Brief diversion to get the individual posteriors for info gain -----------
+# Get the individual posterior, for example:
+# For Au, keep Au fixed and sum the joint posterior for each possible value of Bu.
+
+getpost <- mp |>
+  filter(!node2 %in% c('A', 'B')) |>
+  group_by(pgroup, trialtype, node3, .drop = F) |> # if we need Eig then go back and group by node2
+  summarise(post = sum(posterior), prior = sum(PrUn))
+
+# Simple ig of each pair of unobserved vars
+unobs_ig <- getpost |>
+  group_by(pgroup, trialtype, node3) |> # if we need eig then go back and group by node2
+  summarise(
+    prior_entropy = round(-sum(prior * log2(prior + 1e-10)), 3),
+    post_entropy = round(-sum(post * log2(post + 1e-10)), 3),
+    ig = round(prior_entropy - post_entropy, 3)
+  ) |>
+  ungroup()
+
+# This will be 288 obs, same size as data and ppts, in the eventual likelihood, remember to save it with mp
+ig <- unobs_ig |>
+  select(pgroup, trialtype, node3, ig)
+
+# ---------- Do the work on participant data here ------------
+
+# ------------- 2. Summarise participant data in the 288 trial format ---------------------
+
+dataNorm <- data |>
+  group_by(pgroup, trialtype, node3, .drop = FALSE) |>
+  tally() |>
+  mutate(prop = n / sum(n))
+
+
+dataNorm <- dataNorm |>
+  unite('trial_id', pgroup, trialtype, sep = "_", remove = FALSE)
+
+dataNorm$trial_id <- as.factor(dataNorm$trial_id)
+
+# modelAndData <- modelAndData |>
+#   group_by(trial_id) |>
+#   mutate(baseline = 1 / n())
+
+# Actually let's call it df
+df <- merge(dataNorm, ig, by = c('pgroup', 'trialtype', 'node3')) # adds in ig, 288 obs
+
+#-------- Create variables coding the actual observation -------------
+# We had this before in data, but it wasn't right because of the incomplete counterbalancing issue
+# We know trialtype is right, so let's recode
+df.map <- data.frame(
+  condition = c(
+    'c1',
+    'c2',
+    'c3',
+    'c4',
+    'c5',
+    'd1',
+    'd2',
+    'd3',
+    'd4',
+    'd5',
+    'd6',
+    'd7'
+  ),
+  A = c(0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1),
+  B = c(0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1),
+  E = c(0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1)
+)
+
+df <- df |>
+  left_join(df.map, by = c("trialtype" = "condition"))
+
+# Although we don't filter by Include because now we have the epsilon par, still nice to know how many ppts choose noise
+df <- df |>
+  mutate(
+    Include = !((node3 == 'B=0' & B == 1) |
+      (node3 == 'B=1' & B == 0) |
+      (node3 == 'A=0' & A == 1) |
+      (node3 == 'A=1' & A == 0))
+  )
+
+df <- df |>
+  mutate(
+    Observed = if_else(node3 %in% c('A=0', 'A=1', 'B=0', 'B=1'), TRUE, FALSE)
+  )
+
+# Apply Actual here, not in MP
+df <- df |>
+  mutate(
+    Actual = str_sub(as.character(node3), -1) == as.character(E)
+  )
+
+# The next no Actual
+#A=1, B=0, E=0, Bu=0 = F
+#A=0, B=1, E=0, Au=0 = F
+#A=0, B=1, E=1, Au=1 = F
+#A=1, B=0, E=1, Bu=1 = F
+
+#df$Actual[df$B == '1' & df$E == '0' & df$node3 == 'Bu=1'] <- FALSE
+#df$Actual[df$B == '0' & df$node3 == 'Bu=1'] <- FALSE
+df$Actual[df$A == '0' & df$E == '1' & df$node3 == 'Au=1'] <- FALSE
+df$Actual[df$B == '0' & df$E == '1' & df$node3 == 'Bu=1'] <- FALSE
+
+
+# Now this goes later to go into the likelihood function
+
 # write this as csv in case need it later - 576 rows because: 3 pgroups x 12 trialtypes x 4 nodes x 4 prior possible settings of unobserved variables
-save(mp, file = here('Data', 'modelData', 'modelproc.rda'))
+save(mp, df, file = here('Data', 'modelData', 'goOptim.rda'))
