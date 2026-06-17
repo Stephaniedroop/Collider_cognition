@@ -1,93 +1,44 @@
-# Scripts and data for a behavioural experiment and computational models to study how human cognition uses both causal selection and causal inference to generate explanations for observed phenomena
-
-## Authors
+# Inference and selection in causal explanation
+## Scripts and data for behavioral experiment and computational models
+### Authors
 
 - Stephanie Droop (stephanie.droop@ed.ac.uk)
 - Neil Bramley
 - Tadeg Quillien
 - (some consultation from Christopher Lucas)
 
-## Languages
+### Languages
 
 All scripts are in R, v.4.1. Packages needed are below with citations. 
 
-## How to run
+### How to run
 
-- or **analysis** go to the `Scripts` folder and run `master.R`, or if you know what script you are looking for you can go straight there and run that only. See list of scripts below.
-- This structure assumed you have a renv and .rproj doc with here set to the .rproj.
-- To see and try the behavioural experiment go to https://eco.ppls.ed.ac.uk/~s0342840/collidern/collidertop.html. Code for the task interface and structure of running it in JavaScript in in the folder `Other/hostExperiment`. To click through the experiment: at the comprehension check enter Yes, No, True, 12.
-
-## Files, folders, model
-
-### FOLDER Scripts
-
-- `master.R` - top level analysis script. **Go here first**
+- For all **analysis** in order, go to the `Scripts` folder and run `master.R`, or see individual scripts.
+- This structure assumed you have a renv and .rproj doc with here set to the .rproj. Packages listed below.
+- To see and do the behavioral experiment go to https://eco.ppls.ed.ac.uk/~s0342840/collidern/collidertop.html. Code for the task interface and structure of running it in JavaScript in in the folder `Other/hostExperiment`. To click through the experiment: at the comprehension check enter Yes, No, True, 12.
 
 
-library(tidyverse)
-#library(rjson)
-library(ggnewscale)
-library(here)
-library(RColorBrewer)
-library(ggplot2)
-library(lme4)
-library(lmerTest)
+### Summary of folders and contents
 
-set.seed(12)
+#### FOLDER Scripts
 
-# ------------- 0. Source utils -------------
-source(here('Scripts', 'cesmUtils.R')) # Functions for running the cesm model - used in 03
-source(here('Scripts', 'optimUtils4par.R')) # Functions for modelling likelihood calculation - used in 06
-source(here('Scripts', 'modelNames.R')) # Static lists with model characteristics - used in 05
-source(here('Scripts', 'plotUtils.R')) # Functions for plotting to compare model and ppts used in 10, 11
+- `master.R` - top level analysis script. **Go here first**. Other numbered scripts grouped into order of work:
+-- 0. Sources utils
+-- 1. Gets ppt data from behavioral experiment
+-- 2. Creates parameters, runs cesm, gets model predictions 
+-- 3. Fits models, compares predictions, plots etc
+-- 4. Standalone analyses
 
+#### FOLDER Other
 
-#--------------- 1. Get ppt data from behavioural experiment  -------------------
-\\ (JavaScript for the experiment itself is in the folder Experiment.
-\\ For each participant a csv was saved on the server and then transferred out of there into Data)
-\\ Demographics are in the `preprocessing` script too.
-source(here('Scripts', '01preprocess.R')) # Collates individual csvs, reconciles with prolific report, saves `Data.Rdata` and also `ppts.csv`
+/hostExperiment Holds the Javascript and html to run the behavioral experiment, which is an online interface with a task like a game. Participants from Prolific were paid to complete the task in early July 2024.
+/plots Plots for reporting
+/Reports Reports for internal use, including cover stories and model comparison
 
-#-------------- 2. Create parameters, run cesm, get model predictions and save them ------------
-source(here('Scripts', '02setParams.R')) # The baserates of the causal model
-source(here('Scripts', '03getPreds.R')) # Gets cesm model predictions using `cesmUtils.R`.
-
-# Process model predictions to be more user friendly: take average of 10 model runs, wrangles and renames variables, splits out node values 0 and 1
-source(here('Scripts', '04processPreds.R')) # Also sets a column of 1s and tags like Actual for the lesions
-
-# -------------3. Results: fit model, compare predictions, plot etc -----------------
-
-source(here('Scripts', '05optimise.R')) # Uses `optimUtils4par.R` to fit models.
-source(here('Scripts', '06processForPlot.R')) # Make model predictions use friendly for plotting
-
-source(here('Scripts', '07reportFigs.R')) # Main plots on every trial at once. Uses `plotUtils` functions to compare models
-source(here('Scripts', '08reportFigs2.R')) # Other plots not using functions; aggregate and split plots
-
-source(here('Scripts', '09fitByppt.R')) # Best model fit by participant. Input: data.rda
-source(here('Scripts', '10presentByppt.R')) # chisq tests and component bar plot
-
-
-# ------------- 4. Standalone analyses ------------
-source(here("Scripts", "Standalone", "demogs.R"))
-source(here("Scripts", "Standalone", "chisq.R")) # Uses the `unfitmodelpredictions` data but only to get grouped ppt numbers. Doesn't vary with different models
-source(here("Scripts", "Standalone", "abnormalInflation.R")) # Tests for overall presence of the effect seen in the plot of the 111 conditions by pgroup and structure - doesn't find any because it's only seen in pgroup 1
-
-# Check if cover story affects answers (it doesn't - except in 2/36 conditions due to noise)
-rmarkdown::render(
-  input = here("Scripts", "Standalone", "coverTest.Rmd"),
-  output_file = here("Other", "Reports", "coverTest.html")
-)
-
-
-
-### FOLDER Experiment
-
-Holds the Javascript and html to run the behavioural experiment, which is an online interface with a task like a game. Participants from Prolific were paid to complete the task in early July 2024.
-
-### FOLDER Data, pilot_data
-
-Participant data from the behavioural experiment.
-
+### FOLDER Data
+/new Participant data from the behavioral experiment.
+/pilot_data Same but early run of same design
+/modelData Cover stories for experiment, also in paper appendix 
 
 
 ## Package citations

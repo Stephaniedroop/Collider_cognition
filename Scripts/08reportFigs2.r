@@ -12,6 +12,9 @@ library(ggplot2)
 load(here('Data', 'modelData', 'fitforplot4par.rda')) # 288 of 31
 source(here('Scripts', 'plotUtils.R'))
 
+# Get a pearson correlation between df$prop and df$full
+cor.test(df$full, df$prop)
+
 
 # ------------- A version of the previous, Fig.5 in papar, stacked bar chart but not combining A and Au -------------
 
