@@ -22,12 +22,20 @@ All scripts are in R, v.4.1. Packages needed are below with citations.
 
 #### FOLDER Scripts
 
-- `master.R` - top level analysis script. **Go here first**. Other numbered scripts grouped into order of work:
--- 0. Sources utils
--- 1. Gets ppt data from behavioral experiment
--- 2. Creates parameters, runs cesm, gets model predictions 
--- 3. Fits models, compares predictions, plots etc
--- 4. Standalone analyses
+- `master.R` - top level analysis script. **Go here first**.  
+
+Other numbered scripts are grouped under the following headings:  
+
+-- 0. Sources utils.  
+
+-- 1. Gets ppt data from behavioral experiment.  
+
+-- 2. Creates parameters, runs cesm, gets model predictions.  
+
+-- 3. Fits models, compares predictions, plots etc.  
+
+-- 4. Standalone analyses.  
+
 
 #### FOLDER Other
 
@@ -35,10 +43,13 @@ All scripts are in R, v.4.1. Packages needed are below with citations.
 /plots Plots for reporting
 /Reports Reports for internal use, including cover stories and model comparison
 
-### FOLDER Data
-/new Participant data from the behavioral experiment.
-/pilot_data Same but early run of same design
-/modelData Cover stories for experiment, also in paper appendix 
+#### FOLDER Data. 
+
+/new Participant data from the behavioral experiment.  
+
+/pilot_data Same but early run of same design.  
+
+/modelData Cover stories for experiment, also in paper appendix.
 
 
 ## Package citations
