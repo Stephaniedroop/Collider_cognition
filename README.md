@@ -39,11 +39,14 @@ Other numbered scripts are grouped under the following headings:
 
 #### FOLDER Other
 
-/hostExperiment Holds the Javascript and html to run the behavioral experiment, which is an online interface with a task like a game. Participants from Prolific were paid to complete the task in early July 2024.
-/plots Plots for reporting
-/Reports Reports for internal use, including cover stories and model comparison
+/hostExperiment Holds the Javascript and html to run the behavioral experiment, which is an online interface with a task like a game. Participants from Prolific were paid to complete the task in early July 2024.  
 
-#### FOLDER Data. 
+/plots Plots for reporting.  
+
+/Reports Reports for internal use, including cover stories and model comparison.  
+
+
+#### FOLDER Data 
 
 /new Participant data from the behavioral experiment.  
 
