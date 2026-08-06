@@ -14,6 +14,21 @@ load(here('Data', 'modelData', 'fitforplot4par.rda')) # 288 of 31. Generated in 
 #df <- fitforplot
 pgroups <- levels(df$pgroup)
 
+
+# To take a leaf out of the later gw analysis, let's get entropy of each tt
+ent <- df |>
+  group_by(pgroup, trial_structure_type) |>
+  summarise(entropy = -sum(prop[prop > 0] * log2(prop[prop > 0]))) |>
+  ungroup()
+
+# which trial has the highest entropy?
+ent[which.max(ent$entropy), ] # 3_c3 2.55 (a1b0e0)
+# and min?
+ent[which.min(ent$entropy), ] # 3_d3 1.66 a0b1e1
+
+# Get a pearson correlation between df$prop and df$full = .876
+cor.test(df$full, df$prop)
+
 # Individual plots for all models for all pgroups: (can be used for visual comparisons but otherwise not expected to be needed)
 # Uncomment if needed but it will print a lot of plots
 
@@ -59,6 +74,49 @@ plotf1 <- plot_model_pgroup('full', "A=.1,Au=.5,B=.8,Bu=.5", df)
 ggsave(
   filename = "full1.pdf",
   plot = plotf1,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+# ---------- plot no Model --------
+
+# Later ones with ent
+
+plotnm3 <- plot_nomodel_pgroup2('A=.1,Au=.7,B=.8,Bu=.5', df, ent)
+plotnm3
+
+ggsave(
+  filename = "fullnm3.pdf", # FIG 3 IN PAPER
+  plot = plotnm3,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+# Early ones with no ent
+
+plotnm2 <- plot_nomodel_pgroup2('A=.5,Au=.1,B=.5,Bu=.8', df, ent)
+print(plotnm2)
+
+ggsave(
+  filename = "fullnm2.pdf", # FIG 3 IN PAPER
+  plot = plotnm3,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+
+plotnm1 <- plot_nomodel_pgroup2('A=.1,Au=.5,B=.8,Bu=.5', df, ent)
+print(plotnm1)
+
+ggsave(
+  filename = "fullnm1.pdf", # FIG 3 IN PAPER
+  plot = plotnm1,
   path = here("Other", "Plots"),
   width = 12,
   height = 6,

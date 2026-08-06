@@ -13,12 +13,12 @@ set.seed(12)
 load(here('Data', 'modelData', 'individFits4.rda'))
 
 # Now unlist to access, then format and store the results
-best_models <- lapply(seq_along(results_4parN), function(i) {
+best_models <- lapply(seq_along(results_4par), function(i) {
   # extract numeric BICs for this participant
-  b <- as.numeric(results_4parN[[i]][[1]]$BIC)
+  b <- as.numeric(results_4par[[i]][[1]]$BIC)
 
   # extract model names from each fit
-  n <- results_4parN[[i]][[1]]$model
+  n <- results_4par[[i]][[1]]$model
 
   # find best model
   best <- which.min(b)

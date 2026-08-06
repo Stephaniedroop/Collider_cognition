@@ -114,32 +114,6 @@ mp <- all
 # Add column of 1s called noSelect
 mp$noSelect <- 1
 
-# Allocate a cause as Actual when it fulfils either of two conditions:
-#  1) it equals the Effect
-#  2) unobserved variable can only follow main variable
-
-# Condition 1 - direct match - definitely use. This works if Actual is applied after the sofmax but before the Inference
-# But Neil's whiteboard photo says to do the inference etc before applying the Actual coding. Not sure how to do it
-# mp <- mp |> #
-#   mutate(
-#     Actual = case_when(
-#       node2 == 'A' ~ A == E.x,
-#       node2 == 'B' ~ B == E.x,
-#       node2 == 'Au' ~ Au == E.x,
-#       node2 == 'Bu' ~ Bu == E.x
-#     )
-#   )
-
-# Condition 2 - many of these are already caught but just to catch the extras DO NOT USE - or if you do want to use, then finish it
-# mp$Actual[mp$A == '0' & mp$E == '1' & mp$node3 == 'Au=1'] <- FALSE
-# mp$Actual[mp$B == '0' & mp$E == '1' & mp$node3 == 'Bu=1'] <- FALSE
-# mp$Actual[mp$B == '0' & mp$node3 == 'Bu=1'] <- FALSE
-# mp$Actual[mp$B == '0' & mp$node3 == 'Bu=1'] <- FALSE
-
-# Get values of Actual for each combination of pgroup, trialtype, node3 - NEED A BETTER PLACE TO SAVE THE ACTUAL
-# Actual <- mp |>
-#   group_by(pgroup, trialtype, node3) |>
-#   summarise(Actual = first(Actual), .groups = "drop")
 
 # ------- Brief diversion to get the individual posteriors for info gain -----------
 # Get the individual posterior, for example:
@@ -150,15 +124,27 @@ getpost <- mp |>
   group_by(pgroup, trialtype, node3, .drop = F) |> # if we need Eig then go back and group by node2
   summarise(post = sum(posterior), prior = sum(PrUn))
 
-# Simple ig of each pair of unobserved vars
+
+# If ig is KL divergence
 unobs_ig <- getpost |>
-  group_by(pgroup, trialtype, node3) |> # if we need eig then go back and group by node2
-  summarise(
-    prior_entropy = round(-sum(prior * log2(prior + 1e-10)), 3),
-    post_entropy = round(-sum(post * log2(post + 1e-10)), 3),
-    ig = round(prior_entropy - post_entropy, 3)
+  group_by(pgroup, trialtype, node3) |>
+  mutate(
+    ig = round(
+      if_else(post == 0, 0, post * log2(post / prior)) +
+        if_else(post == 1, 0, (1 - post) * log2((1 - post) / (1 - prior))),
+      3
+    )
   ) |>
   ungroup()
+
+# If ig is ''computational kindness''
+# unobs_ig <- getpost |>
+#   group_by(pgroup, trialtype, node3) |>
+#   mutate(
+#     ig = -sum(if_else(c(prior, 1-prior) == 0, 0, c(prior, 1-prior) * log2(c(prior, 1-prior)))) -
+#       -sum(if_else(c(post, 1-post) == 0, 0, c(post, 1-post) * log2(c(post, 1-post))))
+#   ) |>
+#   ungroup()
 
 # This will be 288 obs, same size as data and ppts, in the eventual likelihood, remember to save it with mp
 ig <- unobs_ig |>

@@ -11,8 +11,6 @@
 # A small function to strip the trailing 0s for presentation. Needs as.character as input. Likely to use elsewhere?
 trim_zeros <- function(x) sub("^(-?)0\\.", ".", sprintf("%s", as.numeric(x)))
 
-source(here('Scripts', 'modelNames.R'))
-
 models <- list(
   full = full,
   noAct = noAct,

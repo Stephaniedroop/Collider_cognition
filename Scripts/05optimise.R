@@ -5,6 +5,7 @@
 library(tidyverse)
 library(here)
 library(xtable)
+source(here('Scripts', 'modelNames.R'))
 source(here('Scripts', 'optimUtils4par.R')) # functions to optimise CURRENTLY NO SCRIPT 5
 
 set.seed(12)

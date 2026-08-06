@@ -12,9 +12,6 @@ library(ggplot2)
 load(here('Data', 'modelData', 'fitforplot4par.rda')) # 288 of 31
 source(here('Scripts', 'plotUtils.R'))
 
-# Get a pearson correlation between df$prop and df$full
-cor.test(df$full, df$prop)
-
 
 # ------------- A version of the previous, Fig.5 in papar, stacked bar chart but not combining A and Au -------------
 
@@ -81,7 +78,7 @@ df_model6_total <- df6 |>
     .groups = "drop"
   )
 
-
+# The old version with model dots (afterwards we will do one with no model)
 p111abf6 <- ggplot() +
   geom_col(
     data = df_bar6,
@@ -147,6 +144,62 @@ ggsave(
   height = 6,
   units = "in"
 )
+
+
+# The old version with model dots (afterwards we will do one with no model)
+p111abf6 <- ggplot() +
+  geom_col(
+    data = df_bar6,
+    aes(x = Variable, y = Participants, fill = node2),
+    position = position_stack()
+  ) +
+
+  # ---- ERROR BARS (total response) ----
+  geom_errorbar(
+    data = df_error6_total,
+    aes(
+      x = Variable,
+      ymin = mean_prop - se,
+      ymax = mean_prop + se
+    ),
+    width = 0.25,
+    size = 0.8
+  ) +
+
+  # ---- MODEL DOTS (total prediction) ----
+  # geom_point(
+  #   data = df_model6_total,
+  #   aes(
+  #     x = Variable,
+  #     y = Model,
+  #     shape = "Model",
+  #     color = "Model"
+  #   ),
+  #   size = 5
+  # ) +
+  scale_fill_manual(values = my_colors, name = "Participants \nand variable") +
+  #scale_fill_brewer(palette = "Spectral", name = "Participants \nand variable") +
+  #scale_shape_manual(name = "", values = c("Model" = 16)) +
+  scale_color_manual(name = "", values = c("Model" = "blue")) +
+
+  labs(
+    x = 'Response',
+    y = 'Proportion/Prediction',
+    title = 'A=.1,Au=.5,B=.8,Bu=.5'
+  ) +
+
+  facet_wrap(~trial_structure_type) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    axis.title = element_text(size = 18),
+    axis.text.x = element_text(vjust = 0.5, hjust = 1),
+    legend.margin = margin(c(0, 0, 0, 0)),
+    axis.title.x = element_text(margin = margin(t = 1)),
+    legend.text = element_text(size = 18),
+    legend.title = element_text(size = 10)
+  )
 
 
 # ------------ Version for Tadeg: could the ppt pattern be modeled by a model with just Inference, Kindness + ig?
