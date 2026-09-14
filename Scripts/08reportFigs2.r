@@ -11,6 +11,38 @@ library(ggplot2)
 
 load(here('Data', 'modelData', 'fitforplot4par.rda')) # 288 of 31
 source(here('Scripts', 'plotUtils.R'))
+#load(here('Data', 'modelData', 'goOptim.rda')) can't load this cos it is also called df
+
+cor(df$prop, df$full) # .876
+cor.test(df$prop, df$full, method = "pearson")
+
+
+# For the reviewer August 2026 who wanted more behavioural preds:
+plotnf1 <- plot_model_pgroup('noInfnoKind', "A=.1,Au=.5,B=.8,Bu=.5", df)
+
+plotnf1
+
+ggsave(
+  filename = "noinf1.pdf",
+  plot = plotnf1,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+
+plotns2 <- plot_model_pgroup('noInfnoKindnoSelect', 'A=.5,Au=.1,B=.5,Bu=.8', df)
+print(plotns2)
+
+ggsave(
+  filename = "ns2.pdf", # FIG 3 IN PAPER
+  plot = plotns2,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
 
 
 # ------------- A version of the previous, Fig.5 in papar, stacked bar chart but not combining A and Au -------------
