@@ -41,34 +41,6 @@ cor.test(df$full, df$prop)
 # Usage
 # Instead, call a single model and pgroup plot like this for example full model for pgroup3:
 
-# -------- behavioral discuss plot for review --------
-
-plot2 <- plot_model_pgroup('noActnoKindnoSelect', 'A=.5,Au=.1,B=.5,Bu=.8', df)
-print(plot2)
-
-ggsave(
-  filename = "lesion2.pdf", # FIG 3 IN PAPER
-  plot = plot2,
-  path = here("Other", "Plots"),
-  width = 12,
-  height = 6,
-  units = "in"
-)
-
-
-plot1 <- plot_model_pgroup('noActnoInfnoKind', 'A=.1,Au=.5,B=.8,Bu=.5', df)
-print(plot1)
-
-ggsave(
-  filename = "lesion1.pdf", # FIG 3 IN PAPER
-  plot = plot1,
-  path = here("Other", "Plots"),
-  width = 12,
-  height = 6,
-  units = "in"
-)
-
-
 # ------- full ------------
 
 # FIG 3 IN PAPER
@@ -108,15 +80,15 @@ ggsave(
   units = "in"
 )
 
-# ---------- plot no Model --------
+# ---------- plot no Model, series with entropy  --------
 
-# Later ones with ent
+# Later ones with ent --- ENDED UP NOT USING
 
 plotnm3 <- plot_nomodel_pgroup2('A=.1,Au=.7,B=.8,Bu=.5', df, ent)
 plotnm3
 
 ggsave(
-  filename = "fullnm3.pdf", # FIG 3 IN PAPER
+  filename = "fullnm3.pdf", #
   plot = plotnm3,
   path = here("Other", "Plots"),
   width = 12,
@@ -129,7 +101,7 @@ plotnm2 <- plot_nomodel_pgroup2('A=.5,Au=.1,B=.5,Bu=.8', df, ent)
 print(plotnm2)
 
 ggsave(
-  filename = "fullnm2.pdf", # FIG 3 IN PAPER
+  filename = "fullnm2.pdf", #
   plot = plotnm3,
   path = here("Other", "Plots"),
   width = 12,
@@ -142,7 +114,7 @@ plotnm1 <- plot_nomodel_pgroup2('A=.1,Au=.5,B=.8,Bu=.5', df, ent)
 print(plotnm1)
 
 ggsave(
-  filename = "fullnm1.pdf", # FIG 3 IN PAPER
+  filename = "fullnm1.pdf", #
   plot = plotnm1,
   path = here("Other", "Plots"),
   width = 12,
@@ -152,11 +124,32 @@ ggsave(
 
 # ----------- no ent --------
 justppt3 <- plot_nomodel_pgroup('A=.1,Au=.7,B=.8,Bu=.5', df)
-#print(plotnm1)
 
 ggsave(
   filename = "justppt3.pdf", # FIG 3 IN PAPER
   plot = justppt3,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+justppt1 <- plot_nomodel_pgroup('A=.1,Au=.5,B=.8,Bu=.5', df)
+
+ggsave(
+  filename = "justppt1.pdf", # FIG 3 IN PAPER
+  plot = justppt1,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+justppt2 <- plot_nomodel_pgroup('A=.5,Au=.1,B=.5,Bu=.8', df)
+
+ggsave(
+  filename = "justppt2.pdf", # FIG 3 IN PAPER
+  plot = justppt2,
   path = here("Other", "Plots"),
   width = 12,
   height = 6,
