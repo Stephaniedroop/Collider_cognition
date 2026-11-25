@@ -20,6 +20,11 @@ set.seed(12)
 
 load(here('Data', 'modelData', 'goOptim.rda')) # loads mp and df
 
+df$mi[df$post==0]<-0
+df$kl[df$post==0]<-0
+df$ig[df$post==0]<-0
+df$ig_old[df$post==0]<-0
+df$flat<-as.numeric(df$kl!=0)
 
 # Split ppt data
 byppt <- data |>
@@ -43,7 +48,7 @@ ppt_merges <- lapply(data_list, function(ppt_data) {
 
 #test2 <- ppt_merges[[23]] #
 #test3 <- ppt_merges[[124]]
-#test4 <- ppt_merges[[215]]
+test4 <- ppt_merges[[215]]
 
 # The new way. mp is the model predictions but it is not by trial. df is 288 obs of trial n.
 # So now, mp will be the same, but df will be each of the participant splits
@@ -51,8 +56,8 @@ ppt_merges <- lapply(data_list, function(ppt_data) {
 # -------- Back to optimisation ------------
 
 # Test on one ppt (one element of the list)
-get_optimisation(model_names, mp = mp, df = test4)
-get_optimisation('full', mp = mp, df = test4)
+get_optimisation(model_names, mp = mp, df = test4, kind_type = 'flat')
+# get_optimisation('full', mp = mp, df = test4, kind_type = 'kl')
 
 # Call optimize_models(model_names, df) for every element of data_list
 results_4par <- lapply(1:length(ppt_merges), function(i) {
@@ -62,7 +67,8 @@ results_4par <- lapply(1:length(ppt_merges), function(i) {
   get_optimisation(
     model_names = model_names,
     mp = mp,
-    df = df_i
+    df = df_i,
+    kind_type = 'flat'
   )
 })
 

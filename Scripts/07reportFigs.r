@@ -41,6 +41,40 @@ cor.test(df$full, df$prop)
 # Usage
 # Instead, call a single model and pgroup plot like this for example full model for pgroup3:
 
+# -------- behavioral discuss plot for review --------
+
+head(df)
+df$mi[df$post==0]<-0
+df$kl[df$post==0]<-0
+df$ig[df$post==0]<-0
+df$ig_old[df$post==0]<-0
+
+plot2 <- plot_model_pgroup('noActnoKindnoSelect', 'A=.5,Au=.1,B=.5,Bu=.8', df)
+print(plot2)
+
+ggsave(
+  filename = "lesion2.pdf", # FIG 3 IN PAPER
+  plot = plot2,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+
+plot1 <- plot_model_pgroup('noActnoInfnoKind', 'A=.1,Au=.5,B=.8,Bu=.5', df)
+print(plot1)
+
+ggsave(
+  filename = "lesion1.pdf", # FIG 3 IN PAPER
+  plot = plot1,
+  path = here("Other", "Plots"),
+  width = 12,
+  height = 6,
+  units = "in"
+)
+
+
 # ------- full ------------
 
 # FIG 3 IN PAPER
