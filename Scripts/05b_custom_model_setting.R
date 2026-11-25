@@ -18,7 +18,7 @@ df$mi[df$post==0]<-0
 df$kl[df$post==0]<-0
 df$ig[df$post==0]<-0
 df$ig_old[df$post==0]<-0
-
+df$flat<-as.numeric(df$kl!=0)
 # Parameters:
 
 predictions<-get_prediction(
@@ -26,7 +26,7 @@ predictions<-get_prediction(
   mp = mp,
   df = df,
   model = models[[1]],
-  kind_type='kl'
+  kind_type='flat'
 )
 
 for (i in 2:length(models))
@@ -36,7 +36,7 @@ for (i in 2:length(models))
                        pars = c(log(1/10),-Inf,log(1),log(1)),
                        mp = mp,
                        df = df,
-                       model = models[[i]], kind_type='kl'))
+                       model = models[[i]], kind_type='flat'))
 }
 
 # ------------- Combine and process --------------------

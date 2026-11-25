@@ -19,7 +19,7 @@ df$mi[df$post==0]<-0
 df$kl[df$post==0]<-0
 df$ig[df$post==0]<-0
 df$ig_old[df$post==0]<-0
-
+df$flat<-as.numeric(df$kl!=0)
 # c1: 000
 # c2: 010
 # c3: 100
@@ -32,34 +32,35 @@ df$ig_old[df$post==0]<-0
 # d5: 101
 # d6: 110
 # d7: 111
-# df.l <-df %>% mutate(kl=kl/max(kl), mi=mi/max(mi)) %>%
-#   gather(k_type, kindness, kl:mi) %>% filter(!node3 %in% c('A=0','A=1','B=0','B=1')) %>%
-#   mutate(tt = factor(trialtype, levels = c("c1", "c2", "c3", "c4", "c5", "d1", "d2", "d3", "d4", "d5", "d6", "d7"),
-#                      labels = c('Conj: A=0,B=0,E=0','Conj: A=0,B=1,E=0','Conj: A=1,B=0,E=0','Conj: A=1,B=1,E=0','Conj: A=1,B=1,E=1',
-#                                 'Disj: A=0,B=0,E=0','Disj: A=0,B=1,E=0','Disj: A=0,B=1,E=1','Disj: A=1,B=0,E=0','Disj: A=1,B=0,E=1','Disj: A=1,B=1,E=0','Disj: A=1,B=1,E=1')),
-#                      pgroup = factor(pgroup, levels = c('1','2','3'), labels = c("Setting 1: A=.1,Au=.5,B=.8,Bu=.5",
-#                                                                                  "Setting 2: A=.5,Au=.1,B=.5,Bu=.8",
-#                                                                                  "Setting 3: A=.1,Au=.7,B=.8,Bu=.5")),
-#          k_type = factor(k_type, levels = c('kl','mi'), labels = c('KL Divergence', 'Mutual Information')))
-         
-# ggplot(df.l, aes(x=node3, y=kindness, shape = k_type, colour = k_type, group = k_type)) +
-#   geom_point() +
-#   geom_line() +
-#   facet_grid(tt ~ pgroup) +
-#   labs(colour = "Kindness type", group = "Kindness type", group = "Kindness type", shape = "Kindness type", y = "Kindness level", x='Variable state') +
-#   theme_bw() +
-#   theme(legend.position = 'bottom')
-# ggsave('kindness_measures.pdf', width = 8, height = 15)
+df.l <-df %>% mutate(kl=kl/max(kl), mi=mi/max(mi), ig = ig/max(ig)) %>%
+  gather(k_type, kindness, c(kl, ig, mi, flat)) %>% filter(!node3 %in% c('A=0','A=1','B=0','B=1')) %>%
+  mutate(tt = factor(trialtype, levels = c("c1", "c2", "c3", "c4", "c5", "d1", "d2", "d3", "d4", "d5", "d6", "d7"),
+                     labels = c('Conj: A=0,B=0,E=0','Conj: A=0,B=1,E=0','Conj: A=1,B=0,E=0','Conj: A=1,B=1,E=0','Conj: A=1,B=1,E=1',
+                                'Disj: A=0,B=0,E=0','Disj: A=0,B=1,E=0','Disj: A=0,B=1,E=1','Disj: A=1,B=0,E=0','Disj: A=1,B=0,E=1','Disj: A=1,B=1,E=0','Disj: A=1,B=1,E=1')),
+                     pgroup = factor(pgroup, levels = c('1','2','3'), labels = c("Setting 1: A=.1,Au=.5,B=.8,Bu=.5",
+                                                                                 "Setting 2: A=.5,Au=.1,B=.5,Bu=.8",
+                                                                                 "Setting 3: A=.1,Au=.7,B=.8,Bu=.5")),
+         k_type = factor(k_type, levels = c('kl','ig','mi','flat'), labels = c('KL Divergence', 'Information Gain','Mutual Information','Constant')))
+
+ggplot(df.l, aes(x=node3, y=kindness, shape = k_type, colour = k_type, group = k_type, linetype=k_type)) +
+  geom_point() +
+  geom_line(alpha = .7) +
+  facet_grid(tt ~ pgroup) +
+  labs(colour = "Kindness type", group = "Kindness type", group = "Kindness type", shape = "Kindness type", y = "Kindness level", x='Variable state') +
+  theme_bw() +
+  guides(linetype = 'none') +
+  theme(legend.position = 'bottom')
+ggsave('kindness_measures.pdf', width = 8, height = 15)
 
 
 
-
+df$flat<-as.numeric(df$kl!=0)
 
 results <- get_optimisation(
   model_names = model_names, # e.g. names(models)
   mp = mp, #TODO ADD FLAG FOR kindness_type and propagate through
   df = df,
-  kind_type='kl'
+  kind_type='flat'
 )
 
 print(results$model_fits)

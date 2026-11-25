@@ -24,6 +24,7 @@ df$mi[df$post==0]<-0
 df$kl[df$post==0]<-0
 df$ig[df$post==0]<-0
 df$ig_old[df$post==0]<-0
+df$flat<-as.numeric(df$kl!=0)
 
 # Split ppt data
 byppt <- data |>
@@ -55,8 +56,8 @@ test4 <- ppt_merges[[215]]
 # -------- Back to optimisation ------------
 
 # Test on one ppt (one element of the list)
-get_optimisation(model_names, mp = mp, df = test4, kind_type = 'kl')
-get_optimisation('full', mp = mp, df = test4, kind_type = 'kl')
+get_optimisation(model_names, mp = mp, df = test4, kind_type = 'flat')
+# get_optimisation('full', mp = mp, df = test4, kind_type = 'kl')
 
 # Call optimize_models(model_names, df) for every element of data_list
 results_4par <- lapply(1:length(ppt_merges), function(i) {
@@ -67,7 +68,7 @@ results_4par <- lapply(1:length(ppt_merges), function(i) {
     model_names = model_names,
     mp = mp,
     df = df_i,
-    kind_type = 'kl'
+    kind_type = 'flat'
   )
 })
 
