@@ -32,6 +32,8 @@ df$flat<-as.numeric(df$kl!=0)
 # d5: 101
 # d6: 110
 # d7: 111
+
+# A late addition plot for revision:
 df.l <-df %>% mutate(kl=kl/max(kl), mi=mi/max(mi), ig = ig/max(ig)) %>%
   gather(k_type, kindness, c(kl, ig, mi, flat)) %>% filter(!node3 %in% c('A=0','A=1','B=0','B=1')) %>%
   mutate(tt = factor(trialtype, levels = c("c1", "c2", "c3", "c4", "c5", "d1", "d2", "d3", "d4", "d5", "d6", "d7"),
@@ -50,7 +52,7 @@ ggplot(df.l, aes(x=node3, y=kindness, shape = k_type, colour = k_type, group = k
   theme_bw() +
   guides(linetype = 'none') +
   theme(legend.position = 'bottom')
-ggsave('kindness_measures.pdf', width = 8, height = 15)
+ggsave('../Other/Plots/kindness_measures.pdf', width = 8, height = 15)
 
 
 
@@ -58,7 +60,7 @@ df$flat<-as.numeric(df$kl!=0)
 
 results <- get_optimisation(
   model_names = model_names, # e.g. names(models)
-  mp = mp, #TODO ADD FLAG FOR kindness_type and propagate through
+  mp = mp, 
   df = df,
   kind_type='flat'
 )
